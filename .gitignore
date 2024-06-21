@@ -1,4 +1,6 @@
 
+**/__pycache__/
+
 push.sh
 .obsidian
 src/.env
