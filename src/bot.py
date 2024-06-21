@@ -136,7 +136,7 @@ async def enableGlobalNotifications(context):
 
             print(f'Looking for {username}')
 
-            maj = AlwaysUpdate.getUpdate(username)
+            maj = await AlwaysUpdate.getUpdate(username)
             
             if username not in ranking.keys() :
                 globalScoreboardShouldBeUpdated = True
