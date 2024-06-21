@@ -176,7 +176,7 @@ async def update(context):
 
         print(f'Looking for {username}')
 
-        maj = AlwaysUpdate.getUpdate(username)
+        maj = await AlwaysUpdate.getUpdate(username)
         
         if username not in ranking.keys() :
             globalScoreboardShouldBeUpdated = True
@@ -189,7 +189,6 @@ async def update(context):
                 picture = discord.File(f)
                 await context.send(file=picture)
             os.remove(img)
-        asyncio.sleep(5)
 
     lastUpdate = datetime.now().strftime('%d/%m/%Y %H:%M:%S')
     if not globalScoreboardShouldBeUpdated :

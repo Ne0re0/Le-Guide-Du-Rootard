@@ -6,7 +6,7 @@ from lib.IMG import IMG
 from PIL import Image
 import string
 import random
-import time
+import asyncio
 
 class AlwaysUpdate:
         
@@ -42,7 +42,7 @@ class AlwaysUpdate:
         return result_str
 
 
-    def getUpdate(self,username) :
+    async def getUpdate(self,username) :
         api = API()
         pdo = PDO("./db/database.sqlite")
         img_generator = IMG()
@@ -53,7 +53,7 @@ class AlwaysUpdate:
         while "status_code" in apidata.keys() : 
             print(f'Status code {apidata["status_code"]}, retrying in {timer} seconds')
             apidata = api.getUser(username)
-            time.sleep(timer)
+            await asyncio.sleep(timer)
             timer += 5
 
 
