@@ -1,0 +1,4 @@
+random_user_agent
+beautifulsoup4
+cairosvg
+discord

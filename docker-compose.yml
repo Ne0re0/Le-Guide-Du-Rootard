@@ -1,0 +1,14 @@
+version: '3.8'
+
+services:
+  leguidedurootard:
+    container_name: leguidedurootard01
+    build: .
+    networks:
+      - bridge
+    volumes:
+      - ./src/db/database.sqlite:/app/db/database.sqlite
+
+networks:
+  bridge:
+    driver: bridge

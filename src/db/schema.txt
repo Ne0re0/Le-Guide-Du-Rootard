@@ -1,0 +1,6 @@
+Users(username TEXT (1), pts INT) 
+Challenges(name TEXT (1)) 
+Contributions(title TEXT (1)) 
+
+Autored(username=@Users.username (1), title=@Contributions.title (1))
+Flagged(username=@Users.username (1), name=@Challenges.name (1)) 
