@@ -65,15 +65,20 @@ async def status(context):
 
     await context.send(message)
 
+
+
 @bot.command()
 async def getUsers(context):
     users = pdo.getUsers()
-    message = ">>> **Les utilisateurs :**\n\n"
     try : 
-        for user in users : 
-            message += f"- {user[0]}\n"
-    except :
-        pass
+        if len(users) == 0 :
+            message = ">>> Aucun utilisateur enregistré"
+        else :
+            message = ">>> **Les utilisateurs :**\n\n"
+            for user in users : 
+                message += f"- {user[0]}\n"
+    except Exception :
+        message = ">>> Une erreur est survenue"
 
     await context.send(message)
 
@@ -106,8 +111,20 @@ async def addUser(context,username):
         resp = pdo.insertUser(username)
         if not resp : 
             await context.send(">>> **Utilisateur existant**")
-        else :
-            await context.send(f">>> **Utilisateur {username} ajouté**")
+            return
+        
+        # Updating user in the database without notifications
+
+        global globalScoreboardShouldBeUpdated
+
+        maj = await AlwaysUpdate.getUpdate(username)
+        
+        if username not in ranking.keys() :
+            globalScoreboardShouldBeUpdated = True
+            ranking[username] = maj["points"]
+
+        await context.send(f">>> **Utilisateur {username} ajouté**")
+
 
 
 @bot.command()
@@ -211,6 +228,7 @@ async def createGlobalScoreboard(context):
         return 
 
     globalScoreboardLaunched = True
+    await context.send(">>> Activation du scoreboard global dans ce canal")
 
     while True : 
         if globalScoreboardShouldBeUpdated :

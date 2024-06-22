@@ -30,7 +30,7 @@ class API :
         soup = BeautifulSoup(resp.text, 'html.parser')
 
         data = {}
-        data["username"] = username
+        data["username"] = self.__getUsername(soup)
         data['points'] = self.__getPoints(soup)
         data['position'] = self.__getPosition(soup)
         data['flagNumber'] = self.__getFlagNumber(soup)
@@ -44,6 +44,11 @@ class API :
 
         return data
 
+    def __getUsername(self,soup) :
+        """Returns the username"""
+        repere = soup.find("h1",{"itemprop":"givenName"})
+        username = repere.find("span").getText()
+        return username
 
     def __getPoints(self,soup) :
         """Returns the number of points"""
@@ -170,3 +175,8 @@ class API :
 
 
         return contributions
+
+
+if __name__ == '__main__' : 
+    api = API()
+    print(api.getUser("jean-838943")['username'])
