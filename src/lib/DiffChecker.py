@@ -8,11 +8,13 @@ import string
 import random
 import asyncio
 
-class AlwaysUpdate:
+class DiffChecker:
         
-    def getDiff(self,apidata,pdodataFlagz,pdodataContributions,pdo,username) :
+    def getDiff(self,apidata,pdodataFlagz,pdodataContributions,pdo,usernameID) :
 
         diff = {"challenges": [], "contributions": {"challenges" : [], "solutions": []}}
+        pdo.updateUsersPoints(usernameID,apidata['points'])
+        pdo.updateUsersDN(usernameID,apidata['username'])
 
         alreadyFlaggedChallenges = [row[1] for row in pdodataFlagz]
         alreadyAutoredChallenges = [row[1] for row in pdodataContributions]
@@ -20,17 +22,17 @@ class AlwaysUpdate:
         for challenge in apidata["recentActivity"] : 
             if challenge["name"] not in alreadyFlaggedChallenges :
                 diff["challenges"].append(challenge)
-                pdo.insertFlagged(username,challenge["name"])
+                pdo.insertFlagged(usernameID,challenge["name"])
         
         for challenge in apidata["contributions"]["challenges"] : 
             if challenge["title"] not in alreadyAutoredChallenges :
                 diff["contributions"]["challenges"].append(challenge)
-                pdo.insertAutored(username,challenge["title"])
+                pdo.insertAutored(usernameID,challenge["title"])
         
         for challenge in apidata["contributions"]["solutions"] : 
             if challenge["title"] not in alreadyAutoredChallenges :
                 diff["contributions"]["solutions"].append(challenge)
-                pdo.insertAutored(username,challenge["title"])
+                pdo.insertAutored(usernameID,challenge["title"])
 
         return diff
 
@@ -42,31 +44,31 @@ class AlwaysUpdate:
         return result_str
 
 
-    async def getUpdate(self,username) :
+    async def update(self,usernameID) :
         api = API()
         pdo = PDO("./db/database.sqlite")
         img_generator = IMG()
         images = []
 
-        apidata = api.getUser(username)
+        apidata = api.getUser(usernameID)
         timer = 5
         while "status_code" in apidata.keys() : 
             print(f'Status code {apidata["status_code"]}, retrying in {timer} seconds')
-            apidata = api.getUser(username)
+            apidata = api.getUser(usernameID)
             await asyncio.sleep(timer)
             timer += 5
 
 
-        pdodataFlagz = pdo.getFlagged(username)
-        pdodataContributions = pdo.getAutored(username)
+        pdodataFlagz = pdo.getFlagged(usernameID)
+        pdodataContributions = pdo.getAutored(usernameID)
 
-        diff = self.getDiff(apidata,pdodataFlagz,pdodataContributions,pdo,username)
+        diff = self.getDiff(apidata,pdodataFlagz,pdodataContributions,pdo,usernameID)
 
         # generate images for new challenges solved
         for challenge in diff["challenges"] : 
             img = img_generator.generateImage(
                 "CHALLENGE VALIDE",
-                username,
+                apidata['username'],
                 apidata["profilePicture"].split("?")[0],
                 apidata["points"],
                 challenge["name"],
@@ -82,7 +84,7 @@ class AlwaysUpdate:
         for challenge in diff["contributions"]["challenges"] : 
             img = img_generator.generateImage(
                 "NOUVEAU CHALLENGE CREE",
-                username,
+                apidata['username'],
                 apidata["profilePicture"].split("?")[0],
                 apidata["points"],
                 challenge["title"],
@@ -98,7 +100,7 @@ class AlwaysUpdate:
         for challenge in diff["contributions"]["solutions"] : 
             img = img_generator.generateImage(
                 "NOUVEAU WRITE-UP CREE",
-                username,
+                apidata['username'],
                 apidata["profilePicture"].split("?")[0],
                 apidata["points"],
                 challenge["title"],
@@ -110,7 +112,7 @@ class AlwaysUpdate:
             img.save(f"/tmp/{filename}.png")
             images.append(f"/tmp/{filename}.png")
     
-        return {"points" : apidata["points"], "images" :images}
+        return {"usernameDN" : apidata['username'], "points" : apidata["points"], "images" :images}
 
 
         

@@ -1,16 +1,20 @@
+CREATE TABLE Users (
+    usernameID TEXT, -- Unique username
+    usernameDN TEXT, -- Display username
+    points INTEGER,
+    PRIMARY KEY (usernameID)
+);
+
 CREATE TABLE Autored (
     username TEXT,
     title TEXT,
-    PRIMARY KEY (username, title)
-);
-
-CREATE TABLE Users (
-    username TEXT,
-    PRIMARY KEY (username)
+    PRIMARY KEY (username, title),
+    FOREIGN KEY (username) REFERENCES Users(usernameID)
 );
 
 CREATE TABLE Flagged (
     username TEXT,
     title TEXT,
-    PRIMARY KEY (username, title)
+    PRIMARY KEY (username, title),
+    FOREIGN KEY (username) REFERENCES Users(usernameID)
 );

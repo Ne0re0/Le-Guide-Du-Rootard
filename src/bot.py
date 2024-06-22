@@ -5,7 +5,7 @@ from discord.ext import commands
 import asyncio
 import os
 from lib.PDO import PDO
-from AlwaysUpdate import AlwaysUpdate
+from lib.DiffChecker import DiffChecker
 import os
 from dotenv import load_dotenv
 from datetime import datetime
@@ -30,9 +30,10 @@ async def help(context):
     message += "- **/help** : Affiche ce message"
     message += "- **/ping** : pong"
     message += "- **/pong** : ping"
+    message += "- **/source** : Affiche l'adresse du code source"
     message += "- **/status** : Donne le statut des différentes variables"
     message += "- **/getUsers** : Liste les utilisateurs enregistrés"
-    message += "- **/addUser username** : Ajoute un utilisateur à la base de données"
+    message += "- **/addUser usernameID** : Ajoute un utilisateur à la base de données"
     message += "- **/enableGlobalNotifications** : Défini un salon comme cible pour les notifications de flag"
     message += "- **/createGlobalScoreboard** : Crée un scoreboard global qui se mettra à jour automatiquement"
     message += "- **/update** : Met à jour chaque utilisateur avec les informations de root-me"
@@ -48,6 +49,11 @@ async def ping(context):
 @bot.command()
 async def pong(context):
     await context.send(">>> ping")
+
+@bot.command()
+async def source(context):
+    await context.send(">>> **https://github.com/Ne0re0/Le-Guide-Du-Rootard**")
+
 
 @bot.command()
 async def status(context):
@@ -76,7 +82,7 @@ async def getUsers(context):
         else :
             message = ">>> **Les utilisateurs :**\n\n"
             for user in users : 
-                message += f"- {user[0]}\n"
+                message += f"- {user[0]} : {user[2]}\n"
     except Exception :
         message = ">>> Une erreur est survenue"
 
@@ -84,31 +90,30 @@ async def getUsers(context):
 
 
 
-
 @bot.command()
-async def addUser(context,username):
+async def addUser(context,usernameID):
     """Ajoute un utiliateur à la base de données. La casse doit correspondre
 
-    Usage : /addUser Username
+    Usage : /addUser usernameID
 
     Args:
         context (ctx): the discord channel from where the bot is called
-        username (string): the username
+        usernameID (string): the usernameID
     """
-    if len(username) > 0 :
+    if len(usernameID) > 0 :
         
-        res = api.getUser(username)
+        res = api.getUser(usernameID)
         timer = 5
         while "status_code" in res.keys() and res["status_code"] == 429 :
             await asyncio.sleep(timer)
-            res = api.getUser(username)
+            res = api.getUser(usernameID)
             timer += 5
 
         if "status_code" in res.keys() and res["status_code"] == 404 :
-            await context.send(">>> **Utilisateur introuvable** \n\nVérifiez que le nom renseigné est bien celui avec lequel vous accédez au profil public avec https://www.root-me.org/USERNAME")
+            await context.send(f">>> **Utilisateur introuvable** \n\nVérifiez que le nom renseigné est bien celui avec lequel vous accédez au profil public avec https://www.root-me.org/{usernameID}")
             return 
 
-        resp = pdo.insertUser(username)
+        resp = pdo.insertUser(usernameID,None,None)
         if not resp : 
             await context.send(">>> **Utilisateur existant**")
             return
@@ -117,13 +122,11 @@ async def addUser(context,username):
 
         global globalScoreboardShouldBeUpdated
 
-        maj = await AlwaysUpdate.getUpdate(username)
+        maj = await diffchecker.update(usernameID)
         
-        if username not in ranking.keys() :
-            globalScoreboardShouldBeUpdated = True
-            ranking[username] = maj["points"]
+        globalScoreboardShouldBeUpdated = True
 
-        await context.send(f">>> **Utilisateur {username} ajouté**")
+        await context.send(f">>> **Utilisateur `{usernameID}`:`{maj['usernameDN']}` ajouté**")
 
 
 
@@ -135,7 +138,6 @@ async def enableGlobalNotifications(context):
         context (ctx): the discord channel from where the bot is called
     """
     global alwaysNotifyFlagz
-    global ranking
     global globalScoreboardShouldBeUpdated
     global lastUpdate
 
@@ -145,31 +147,30 @@ async def enableGlobalNotifications(context):
 
     alwaysNotifyFlagz = True
     await context.send("Activation des mises à jour automatiques")
+    
     while True :
         print("running")
         os.system('echo "Last run : $(date)" >> /tmp/logs.txt')
         for user in pdo.getUsers() : 
-            username = user[0]
+            usernameID = user[0]
 
-            print(f'Looking for {username}')
+            print(f'Looking for {usernameID}')
 
-            maj = await AlwaysUpdate.getUpdate(username)
+            maj = await diffchecker.update(usernameID)
             
-            if username not in ranking.keys() :
-                globalScoreboardShouldBeUpdated = True
-                ranking[username] = maj["points"]
-
             for img in maj["images"] :
-                ranking[username] = maj["points"]
                 globalScoreboardShouldBeUpdated = True
                 with open(img ,'rb') as f:
                     picture = discord.File(f)
                     await context.send(file=picture)
                 os.remove(img)
-            await asyncio.sleep(10)
 
         lastUpdate = datetime.now().strftime('%d/%m/%Y %H:%M:%S')
+        print("end")
         await asyncio.sleep(7200) # 2h
+
+
+
 
 
 @bot.command()
@@ -180,7 +181,6 @@ async def update(context):
         context (ctx): the discord channel from where the bot is called
     """
     global alwaysNotifyFlagz
-    global ranking
     global globalScoreboardShouldBeUpdated
     global lastUpdate
 
@@ -189,18 +189,13 @@ async def update(context):
     print("running")
     os.system('echo "Last run : $(date)" >> /tmp/logs.txt')
     for user in pdo.getUsers() : 
-        username = user[0]
+        usernameID = user[0]
 
-        print(f'Looking for {username}')
+        print(f'Looking for {usernameID}')
 
-        maj = await AlwaysUpdate.getUpdate(username)
+        maj = await diffchecker.update(usernameID)
         
-        if username not in ranking.keys() :
-            globalScoreboardShouldBeUpdated = True
-            ranking[username] = maj["points"]
-
         for img in maj["images"] :
-            ranking[username] = maj["points"]
             globalScoreboardShouldBeUpdated = True
             with open(img ,'rb') as f:
                 picture = discord.File(f)
@@ -210,16 +205,19 @@ async def update(context):
     lastUpdate = datetime.now().strftime('%d/%m/%Y %H:%M:%S')
     if not globalScoreboardShouldBeUpdated :
         await context.send(">>> **Mise à jour terminée** : Rien à l'horizon !")
+    print("end")
+
+
+
 
 @bot.command()
 async def createGlobalScoreboard(context):
-    """Create a global scoreboard with all players in
+    """Create a global scoreboard with all players in and enable auto-update
 
     Args:
         context (ctx): the discord channel from where the bot is called
     """
     global globalScoreboardShouldBeUpdated
-    global ranking
     global globalScoreboardLaunched
     global lastUpdate
 
@@ -233,19 +231,27 @@ async def createGlobalScoreboard(context):
     while True : 
         if globalScoreboardShouldBeUpdated :
 
-            ranks = [':one:',':two:',":three:",":four:",":five:",":six:",":seven:",":eight:",":nine:",":keycap_ten:"]
+            global ranks
+            global pdo
 
-            message = f">>> **Classement général du serveur | {len(ranking.keys())} membres**\n"
+            users = pdo.getUsers()
+
+            if len(users) == 0 :
+                await context.send(">>> Aucun utilisateur enregistré")
+                return
+
+            message = f">>> **Classement général du serveur | {len(users)} membres**\n"
             message += f"{lastUpdate}\n"
 
-            scoreboard =  sorted(ranking.items(), key=lambda t: t[1], reverse=True)
+            scoreboard =  sorted(users, key=lambda t: t[2], reverse=True)
 
-            for rank,(username,points) in enumerate(scoreboard) : 
-                if rank < 10 :
-                    message += f"{ranks[rank]} - **{username}**\n"
+            for rank,(usernameID,usernameDN,points) in enumerate(scoreboard) : 
+                if rank < len(ranks) :
+                    message += f"{ranks[rank]} - **{usernameDN}**\n"
                 else :
-                    message += f"**{rank + 1}** - **{username}**\n"
+                    message += f"**{rank + 1}** - **{usernameDN}**\n"
                 message += f"{points} points\n"
+
             await context.channel.purge(limit=100)
             await context.send(message)
             globalScoreboardShouldBeUpdated = False
@@ -254,30 +260,34 @@ async def createGlobalScoreboard(context):
 
 @bot.command()
 async def scoreboard(context):
-    """Create a global scoreboard with all players in
+    """Display the scoreboard
 
     Args:
         context (ctx): the discord channel from where the bot is called
     """
 
-    global ranking
     global ranks
     global lastUpdate
 
-    message = f">>> **Classement général du serveur | {len(ranking.keys())} membres**\n"
+    users = pdo.getUsers()
+
+    if len(users) == 0 :
+        await context.send(">>> Aucun utilisateur enregistré")
+        return
+
+    message = f">>> **Classement général du serveur | {len(users)} membres**\n"
     message += f"{lastUpdate}\n"
 
-    scoreboard =  sorted(ranking.items(), key=lambda t: t[1], reverse=True)
-
-    for rank,(username,points) in enumerate(scoreboard) : 
-        if rank < 10 :
-            message += f"{ranks[rank]} - **{username}**\n"
+    scoreboard =  sorted(users, key=lambda t: t[2], reverse=True)
+    
+    for rank,(usernameID,usernameDN,points) in enumerate(scoreboard) : 
+        if rank < len(ranks) :
+            message += f"{ranks[rank]} - **{usernameDN}**\n"
         else :
-            message += f"**{rank + 1}** - **{username}**\n"
+            message += f"**{rank + 1}** - **{usernameDN}**\n"
         message += f"{points} points\n"
 
     await context.send(message)
-
 
 
 
@@ -288,11 +298,11 @@ if __name__ == '__main__' :
     # Some variables to handle bruteforcers :(
     alwaysNotifyFlagz = False
     globalScoreboardLaunched = False
-    globalScoreboardShouldBeUpdated = False
+    globalScoreboardShouldBeUpdated = True
     lastUpdate = None
 
     # Display some emojis instead of rank number
-    ranks = [':one:',':two:',":three:",":four:",":five:",":six:",":seven:",":eight:",":nine:",":keycap_ten:"]
+    ranks = [':first_place:',':second_place:',":third_place:",":four:",":five:",":six:",":seven:",":eight:",":nine:",":keycap_ten:"]
 
 
     # Talks to the database
@@ -302,7 +312,7 @@ if __name__ == '__main__' :
     api = API()
 
     # Generate Notifications Images
-    AlwaysUpdate = AlwaysUpdate()
+    diffchecker = DiffChecker()
 
     # Rank users
     ranking = {}

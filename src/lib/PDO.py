@@ -12,14 +12,40 @@ class PDO :
 
     def getUsers(self) : 
         c = self.conn.cursor()
-        c.execute("SELECT username FROM Users;")
+        c.execute("SELECT * FROM Users;")
         users = c.fetchall()
         return users
 
-    def insertUser(self,username) : 
+    def insertUser(self,usernameID,usernameDN,points) : 
         c = self.conn.cursor()
         try :
-            c.execute(f"INSERT INTO Users (username) VALUES ('{username}');")
+            if points is None :
+                points = 'NULL'
+            if usernameDN is None :
+                usernameDN = 'NULL'
+            else :
+                usernameDN = f"'{usernameDN}'"
+            c.execute(f"INSERT INTO Users (usernameID, usernameDN, points) VALUES ('{usernameID}', {usernameDN}, {points});")
+            self.conn.commit()
+            return True 
+        except Exception :
+            print("Exception insertUser(self,usernameID,usernameDN,points)")
+            return False
+    
+    def updateUsersPoints(self,usernameID,points) : 
+        c = self.conn.cursor()
+        try :
+            c.execute(f"UPDATE Users SET points={points} WHERE usernameID='{usernameID}';")
+            self.conn.commit()
+            return True 
+        except Exception :
+            print(Exception)
+            return False
+
+    def updateUsersDN(self,usernameID,usernameDN) : 
+        c = self.conn.cursor()
+        try :
+            c.execute(f"UPDATE Users SET usernameDN='{usernameDN}' WHERE usernameID='{usernameID}';")
             self.conn.commit()
             return True 
         except Exception :
@@ -31,6 +57,7 @@ class PDO :
     #   Deal with Flagged table
     #
     #
+
     def getFlagged(self,username) : 
         """Returns all the challenges flagged by the given user
 
