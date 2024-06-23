@@ -7,5 +7,5 @@ src/.env
 
 src/db/database.sqlite
 
-src/img/IMG/*
-!src/img/IMG/foo
+src/img/IMG/logo/*
+!src/img/IMG/logo/foo

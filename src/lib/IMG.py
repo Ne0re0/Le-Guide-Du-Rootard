@@ -3,8 +3,6 @@ import requests
 from io import BytesIO
 from cairosvg import svg2png
 
-data = {'logo': 'IMG/logo/rubon68.svg?1637496507', 'name': 'XSS - Server Side', 'date': 'yesterday', 'link': 'fr/Challenges/Web-Serveur/XSS-Server-Side', 'category': 'Web Serveur'}                   
-
 class IMG :
 
     def __init__(self) :
@@ -84,9 +82,3 @@ class IMG :
 
 
         return img
-
-
-if __name__ == '__main__' : 
-    IMG_generator = IMG()
-
-    IMG_generator.generateImage("NOUVEAU CHALLENGE VALIDE","Neoreo","IMG/logo/auton1.jpg",3000,"XSS - Server Side","Web Server", "IMG/logo/rubon68.svg",2)
