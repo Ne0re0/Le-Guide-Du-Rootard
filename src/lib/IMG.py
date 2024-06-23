@@ -30,8 +30,20 @@ class IMG :
         Returns:
             PIL Image: The image that will be displayed when a user flag a challenge
         """
-        img = Image.new(mode="RGB", size=(700,300),color = (32,32,32))
+        # Generate background
+        img = Image.new(mode="RGBA", size=(700,280),color = (32,32,32))
         draw = ImageDraw.Draw(img)
+
+        # Add RootMe's logo
+        logo_rootme = Image.open('img/rootme-logo.png')
+        logo_rootme = logo_rootme.resize((120,60))
+        img.paste(logo_rootme,(570,25),logo_rootme)
+
+        # Add RootMe's title
+        title_rootme = Image.open('img/rootme-title.png')
+        title_rootme = title_rootme.resize((200,50))
+        img.paste(title_rootme,(490,210),title_rootme)
+
 
         # Add title
         font = ImageFont.truetype('./img/fonts/bold-marker.ttf', 40)
@@ -90,5 +102,11 @@ class IMG :
             logo = logo.resize((40,40))
         img.paste(logo,(40,215))
 
-
         return img
+
+if __name__ == '__main__' : 
+    img_generator = IMG()
+
+    img = img_generator.generateImage("NOUVEAU CHALLENGE VALIDE", "Neoreo","IMG/logo/auton1.jpg",3100,"XSLT - Execution de code","Web Serveur","IMG/logo/rubon196.svg",4)
+
+    img.show()
