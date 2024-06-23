@@ -22,10 +22,6 @@ class API :
         headers = {"User-Agent":self.ua_generator.getRandom()}
         resp = requests.get(f"https://www.root-me.org/{username}?&lang=en",headers=headers)
         if resp.status_code != 200 :
-            # print(resp.status_code)
-            # for key, value in resp.headers.items():
-            #     print(f"{key}: {value}")
-            # print(resp.text)
             return {"status_code":resp.status_code,"url":f"https://www.root-me.org/{username}?&lang=en"}
         soup = BeautifulSoup(resp.text, 'html.parser')
 
@@ -175,8 +171,3 @@ class API :
 
 
         return contributions
-
-
-if __name__ == '__main__' : 
-    api = API()
-    print(api.getUser("jean-838943")['username'])

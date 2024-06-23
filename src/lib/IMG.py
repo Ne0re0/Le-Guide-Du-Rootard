@@ -2,6 +2,12 @@ from PIL import Image,ImageDraw,ImageFont
 import requests
 from io import BytesIO
 from cairosvg import svg2png
+import unicodedata
+
+def remove_accents(text):
+    nfkd_form = unicodedata.normalize('NFKD', text)
+    only_ascii = ''.join([c for c in nfkd_form if not unicodedata.combining(c)])
+    return only_ascii
 
 class IMG :
 
@@ -29,29 +35,33 @@ class IMG :
 
         # Add title
         font = ImageFont.truetype('./img/fonts/bold-marker.ttf', 40)
-        draw.text((40, 20), title, fill="green", font=font)
+        draw.text((40, 20), remove_accents(title), fill="green", font=font)
 
         # Add challenge's name
         font = ImageFont.truetype('./img/fonts/bold-marker.ttf', 30)
-        draw.text((40, 175), challengeName, fill="yellow", font=font)
+        draw.text((40, 175), remove_accents(challengeName), fill="yellow", font=font)
 
         # Add challenge's category
         font = ImageFont.truetype('./img/fonts/bold-marker.ttf', 20)
-        draw.text((100, 220), challengeCategory, fill="grey", font=font)
+        draw.text((100, 220), remove_accents(challengeCategory), fill="grey", font=font)
 
         # Add server ranking
-        if serverRanking is not None :
-            font = ImageFont.truetype('./img/fonts/bold-marker.ttf', 15)
-            if serverRanking == 1 or serverRanking == "1" :
-                serverRanking = "1er du serveur"
-            else : 
-                serverRanking = f"{serverRanking}eme du serveur"
 
-            draw.text((40, 260), serverRanking, fill="grey", font=font)
+        ##### The following code in commented because I did not found a way to retrieve all flagged challenges
+        ##### without using the API, so, no way to compute the serveur ranking correctly
+
+        # if serverRanking is not None :
+        #     font = ImageFont.truetype('./img/fonts/bold-marker.ttf', 15)
+        #     if serverRanking == 1 or serverRanking == "1" :
+        #         serverRanking = "1er du serveur"
+        #     else : 
+        #         serverRanking = f"{serverRanking}eme du serveur"
+
+        #     draw.text((40, 260), remove_accents(serverRanking), fill="grey", font=font)
 
         # Add username
         font = ImageFont.truetype('./img/fonts/bold-marker.ttf', 30)
-        draw.text((140, 85), username, fill="white", font=font)
+        draw.text((140, 85), remove_accents(username), fill="white", font=font)
 
         # Add score
         font = ImageFont.truetype('./img/fonts/bold-marker.ttf', 20)

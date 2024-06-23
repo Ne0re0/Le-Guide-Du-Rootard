@@ -104,7 +104,7 @@ class PDO :
         c = self.conn.cursor()
         c.execute(f"SELECT * FROM Flagged WHERE title='{challengeTitle}'")
         resp = c.fetchall()
-        return len(resp) + 1
+        return len(resp)
 
     #
     #

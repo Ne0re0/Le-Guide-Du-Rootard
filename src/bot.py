@@ -203,8 +203,6 @@ async def update(context):
             os.remove(img)
 
     lastUpdate = datetime.now().strftime('%d/%m/%Y %H:%M:%S')
-    if not globalScoreboardShouldBeUpdated :
-        await context.send(">>> **Mise à jour terminée** : Rien à l'horizon !")
     print("end")
 
 
