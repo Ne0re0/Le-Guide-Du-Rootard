@@ -44,9 +44,9 @@ class DiffChecker:
         return result_str
 
 
-    async def update(self,usernameID) :
+    async def update(self,usernameID,context) :
         api = API()
-        pdo = PDO("./db/database.sqlite")
+        pdo = PDO(context.guild.id)
         img_generator = IMG()
         images = []
 
@@ -67,7 +67,7 @@ class DiffChecker:
         # generate images for new challenges solved
         for challenge in diff["challenges"] : 
             img = img_generator.generateImage(
-                "CHALLENGE VALIDE",
+                "NOUVEAU FLAG",
                 apidata['username'],
                 apidata["profilePicture"].split("?")[0],
                 apidata["points"],

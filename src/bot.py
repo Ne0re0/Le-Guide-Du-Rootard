@@ -16,6 +16,17 @@ load_dotenv()
 bot = commands.Bot(command_prefix="/", description="Le guide du routard", intents=discord.Intents.all())
 
 
+def getPDO(context) : 
+    global PDOs
+
+    if context.guild.id in PDOs.keys() :
+        pdo = PDOs[context.guild.id]
+    else :
+        pdo = PDO(context.guild.id)
+        PDOs[context.guild.id] = pdo
+    return pdo
+
+
 @bot.event
 async def on_ready():
     print("Bot ready !")
@@ -46,6 +57,11 @@ async def help(context):
 async def ping(context):
     await context.send(">>> pong")
 
+# @bot.command()
+# async def test(context):
+#     print(context.guild.id)
+
+
 @bot.command()
 async def pong(context):
     await context.send(">>> ping")
@@ -75,6 +91,7 @@ async def status(context):
 
 @bot.command()
 async def getUsers(context):
+    pdo = getPDO(context)
     users = pdo.getUsers()
     try : 
         if len(users) == 0 :
@@ -113,6 +130,7 @@ async def addUser(context,usernameID):
             await context.send(f">>> **Utilisateur introuvable** \n\nVérifiez que le nom renseigné est bien celui avec lequel vous accédez au profil public avec https://www.root-me.org/{usernameID}")
             return 
 
+        pdo = getPDO(context)
         resp = pdo.insertUser(usernameID,None,None)
         if not resp : 
             await context.send(">>> **Utilisateur existant**")
@@ -122,7 +140,7 @@ async def addUser(context,usernameID):
 
         global globalScoreboardShouldBeUpdated
 
-        maj = await diffchecker.update(usernameID)
+        maj = await diffchecker.update(usernameID,context)
         
         globalScoreboardShouldBeUpdated = True
 
@@ -151,12 +169,13 @@ async def enableGlobalNotifications(context):
     while True :
         print("running")
         os.system('echo "Last run : $(date)" >> /tmp/logs.txt')
+        pdo = getPDO(context)
         for user in pdo.getUsers() : 
             usernameID = user[0]
 
             print(f'Looking for {usernameID}')
 
-            maj = await diffchecker.update(usernameID)
+            maj = await diffchecker.update(usernameID,context)
             
             for img in maj["images"] :
                 globalScoreboardShouldBeUpdated = True
@@ -188,12 +207,13 @@ async def update(context):
 
     print("running")
     os.system('echo "Last run : $(date)" >> /tmp/logs.txt')
+    pdo = getPDO(context)
     for user in pdo.getUsers() : 
         usernameID = user[0]
 
         print(f'Looking for {usernameID}')
 
-        maj = await diffchecker.update(usernameID)
+        maj = await diffchecker.update(usernameID,context)
         
         for img in maj["images"] :
             globalScoreboardShouldBeUpdated = True
@@ -226,18 +246,19 @@ async def createGlobalScoreboard(context):
     globalScoreboardLaunched = True
     await context.send(">>> Activation du scoreboard global dans ce canal")
 
+    pdo = getPDO(context)
+
     while True : 
         if globalScoreboardShouldBeUpdated :
 
             global ranks
-            global pdo
 
             users = pdo.getUsers()
 
             if len(users) == 0 :
                 await context.send(">>> Aucun utilisateur enregistré")
                 return
-
+            print(users)
             message = f">>> **Classement général du serveur | {len(users)} membres**\n"
             message += f"{lastUpdate}\n"
 
@@ -266,6 +287,8 @@ async def scoreboard(context):
 
     global ranks
     global lastUpdate
+
+    pdo = getPDO(context)
 
     users = pdo.getUsers()
 
@@ -299,13 +322,11 @@ if __name__ == '__main__' :
     globalScoreboardShouldBeUpdated = True
     lastUpdate = None
 
+    PDOs = {}
+
     # Display some emojis instead of rank number
     ranks = [':first_place:',':second_place:',":third_place:",":four:",":five:",":six:",":seven:",":eight:",":nine:",":keycap_ten:"]
 
-
-    # Talks to the database
-    pdo = PDO('./db/database.sqlite')
-    
     # Talks with root-me user's profiles because their API is kinda shit
     api = API()
 
