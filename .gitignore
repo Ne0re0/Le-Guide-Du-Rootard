@@ -6,7 +6,7 @@ push.sh
 .obsidian
 src/.env
 
-src/db/database.sqlite
+src/db/*.sqlite
 
 src/img/IMG/logo/*
 !src/img/IMG/logo/foo

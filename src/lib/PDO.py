@@ -67,6 +67,9 @@ class PDO :
         self.path = f"db/{self.db}.sqlite"
         self.connexion = {}
 
+        if not os.path.exists('db'):
+            os.makedirs('db')
+        
         if not os.path.exists(self.path):
             create_db(self.path)
 
