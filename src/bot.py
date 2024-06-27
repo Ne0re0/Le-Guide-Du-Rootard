@@ -16,19 +16,18 @@ load_dotenv()
 bot = commands.Bot(command_prefix="/", description="Le guide du routard", intents=discord.Intents.all())
 
 
-def getPDO(context) : 
+def getPDO(guildId) : 
     global PDOs
-
-    if context.guild.id in PDOs.keys() :
-        pdo = PDOs[context.guild.id]
+    if guildId in PDOs.keys() :
+        pdo = PDOs[guildId]
     else :
-        pdo = PDO(context.guild.id)
-        PDOs[context.guild.id] = pdo
+        pdo = PDO(guildId)
+        PDOs[guildId] = pdo
     return pdo
-
 
 @bot.event
 async def on_ready():
+    await start()
     print("Bot ready !")
 
 bot.remove_command("help")
@@ -46,7 +45,7 @@ async def help(context):
     message += "- **/getUsers** : Liste les utilisateurs enregistrés"
     message += "- **/addUser usernameID** : Ajoute un utilisateur à la base de données"
     message += "- **/enableGlobalNotifications** : Défini un salon comme cible pour les notifications de flag"
-    message += "- **/createGlobalScoreboard** : Crée un scoreboard global qui se mettra à jour automatiquement"
+    message += "- **/enableGlobalScoreboard** : Crée un scoreboard global qui se mettra à jour automatiquement"
     message += "- **/update** : Met à jour chaque utilisateur avec les informations de root-me"
     message += "- **/scoreboard** : Affiche le scoreboard"
     message += "\n"
@@ -57,11 +56,6 @@ async def help(context):
 async def ping(context):
     await context.send(">>> pong")
 
-# @bot.command()
-# async def test(context):
-#     print(context.guild.id)
-
-
 @bot.command()
 async def pong(context):
     await context.send(">>> ping")
@@ -70,28 +64,70 @@ async def pong(context):
 async def source(context):
     await context.send(">>> **https://github.com/Ne0re0/Le-Guide-Du-Rootard**")
 
-
 @bot.command()
 async def status(context):
 
-    global alwaysNotifyFlagz
-    global globalScoreboardLaunched
-    global globalScoreboardShouldBeUpdated
-    global lastUpdate
+    pdo = getPDO(context.guild.id)
+
+    alwaysNotifyFlagz = pdo.getGlobalNotificationsChannelName()
+    globalScoreboardLaunched = pdo.getGlobalScoreboardChannelName()
+    globalScoreboardShouldBeUpdated = pdo.getGlobalScoreboardShouldBeUpdated()
+    lastUpdate = pdo.getLastUpdate()
 
     message = ">>> **Status**\n\n"
     message += f"**Notifier lors d'un flag :** {alwaysNotifyFlagz}\n"
     message += f"**Le scoreboard est mis à jour automatiquement :** {globalScoreboardLaunched}\n"
-    message += f"**Le scoreboard doit va être mis à jour prochainement :** {globalScoreboardShouldBeUpdated}\n"
+    message += f"**Le scoreboard doit va être mis à jour prochainement :** {globalScoreboardShouldBeUpdated == '1'}\n"
     message += f"**Dernière update :** {lastUpdate}\n"
 
     await context.send(message)
 
 
+######################################################
+###
+###               RESTART MANAGEMENT
+###
+######################################################
+
+async def start():
+    """
+       This function will restart Global Notifications 
+       and Global Scoreboard after the bot went down.
+    """
+
+    # If no db then there is nothing to restart
+    if not os.path.exists('db') or len([file for file in os.listdir("db") if file.endswith('.sqlite')]) == 0:
+        print("Nothing to restart")
+        return
+
+    dbs = [file for file in os.listdir("db") if file.endswith('.sqlite')]
+    for db in dbs :
+        print(f"Restarting {db}")
+        serverId = db.split(".")[0]
+        pdo = getPDO(serverId) # Retrieve the discord server id
+        globalNotificationsChannelId = pdo.getGlobalNotificationsChannelId()
+        globalScoreboardChannelId = pdo.getGlobalScoreboardChannelId()
+
+        if globalNotificationsChannelId is not None :
+            asyncio.create_task(__restartGlobalNotifications(serverId,globalNotificationsChannelId))
+
+        if globalScoreboardChannelId is not None :
+            asyncio.create_task(__restartGlobalScoreboard(serverId,globalScoreboardChannelId))
+
+
+    
+
+
+######################################################
+###
+###               USERS MANAGEMENT
+###
+######################################################
 
 @bot.command()
 async def getUsers(context):
-    pdo = getPDO(context)
+    print("getUsers")
+    pdo = getPDO(context.guild.id)
     users = pdo.getUsers()
     try : 
         if len(users) == 0 :
@@ -106,7 +142,6 @@ async def getUsers(context):
     await context.send(message)
 
 
-
 @bot.command()
 async def addUser(context,usernameID):
     """Ajoute un utiliateur à la base de données. La casse doit correspondre
@@ -117,8 +152,9 @@ async def addUser(context,usernameID):
         context (ctx): the discord channel from where the bot is called
         usernameID (string): the usernameID
     """
+
     if len(usernameID) > 0 :
-        
+        print("addUser")
         res = api.getUser(usernameID)
         timer = 5
         while "status_code" in res.keys() and res["status_code"] == 429 :
@@ -130,7 +166,7 @@ async def addUser(context,usernameID):
             await context.send(f">>> **Utilisateur introuvable** \n\nVérifiez que le nom renseigné est bien celui avec lequel vous accédez au profil public avec https://www.root-me.org/{usernameID}")
             return 
 
-        pdo = getPDO(context)
+        pdo = getPDO(context.guild.id)
         resp = pdo.insertUser(usernameID,None,None)
         if not resp : 
             await context.send(">>> **Utilisateur existant**")
@@ -146,6 +182,46 @@ async def addUser(context,usernameID):
 
         await context.send(f">>> **Utilisateur `{usernameID}`:`{maj['usernameDN']}` ajouté**")
 
+######################################################
+###
+###            NOTIFICATION MANAGEMENT
+###
+######################################################
+
+async def __restartGlobalNotifications(guildId,channelId) :
+    guild = await bot.fetch_guild(guildId)
+    channel = await guild.fetch_channel(channelId)
+    await channel.send(">>> Redémarrage des notifications globales")
+    
+    pdo = getPDO(channel.guild.id)
+
+    alwaysNotifyFlagz = channelId
+
+    while True :
+
+        # Check that the notifying channel has not been changed
+        if alwaysNotifyFlagz != pdo.getGlobalNotificationsChannelId() :
+            return
+
+        # Starts the update
+        pdo.setLastUpdate("En cours")
+
+        for user in pdo.getUsers() : 
+            usernameID = user[0]
+
+            print(f'Looking for {usernameID}')
+
+            maj = await diffchecker.update(usernameID,channel)
+            
+            for img in maj["images"] :
+                pdo.setGlobalScoreboardShouldBeUpdated("1")
+                with open(img ,'rb') as f:
+                    picture = discord.File(f)
+                    await channel.send(file=picture)
+                os.remove(img)
+
+        pdo.setLastUpdate(datetime.now().strftime('%d/%m/%Y %H:%M:%S'))
+        await asyncio.sleep(7200) # 2h
 
 
 @bot.command()
@@ -155,21 +231,33 @@ async def enableGlobalNotifications(context):
     Args:
         context (ctx): the discord channel from where the bot is called
     """
-    global alwaysNotifyFlagz
-    global globalScoreboardShouldBeUpdated
-    global lastUpdate
+    print("enableGlobalNotifications")
+    pdo = getPDO(context.guild.id)
 
-    if alwaysNotifyFlagz :
-        await context.send("Les mises à jours automatiques sont déjà activées")
+    alwaysNotifyFlagz = pdo.getGlobalNotificationsChannelId()
+
+    if alwaysNotifyFlagz == str(context.channel.id) :
+        await context.send(">>> Les mises à jours automatiques sont déjà activées sur ce canal")
         return
-
-    alwaysNotifyFlagz = True
-    await context.send("Activation des mises à jour automatiques")
-    
+    elif alwaysNotifyFlagz != context.channel.id : 
+        pdo.setGlobalNotificationsChannelId(context.channel.id)
+        pdo.setGlobalNotificationsChannelName(context.channel.name)
+        await context.send(">>> Les mises à jours automatiques ont été déplacées sur ce canal")
+    else :
+        pdo.setGlobalNotificationsChannelId(context.channel.id)
+        pdo.setGlobalNotificationsChannelName(context.channel.name)
+        await context.send(">>> Activation des mises à jour automatiques sur ce canal")
+        
     while True :
-        print("running")
-        os.system('echo "Last run : $(date)" >> /tmp/logs.txt')
-        pdo = getPDO(context)
+
+        # Check that the notifying channel has not been changed
+        alwaysNotifyFlagz = pdo.getGlobalNotificationsChannelId()
+        if alwaysNotifyFlagz != str(context.channel.id) :
+            return
+
+        # Starts the update
+        pdo.setLastUpdate("En cours")
+
         for user in pdo.getUsers() : 
             usernameID = user[0]
 
@@ -178,18 +266,31 @@ async def enableGlobalNotifications(context):
             maj = await diffchecker.update(usernameID,context)
             
             for img in maj["images"] :
-                globalScoreboardShouldBeUpdated = True
+                pdo.setGlobalScoreboardShouldBeUpdated("1")
                 with open(img ,'rb') as f:
                     picture = discord.File(f)
                     await context.send(file=picture)
                 os.remove(img)
 
-        lastUpdate = datetime.now().strftime('%d/%m/%Y %H:%M:%S')
-        print("end")
+        pdo.setLastUpdate(datetime.now().strftime('%d/%m/%Y %H:%M:%S'))
         await asyncio.sleep(7200) # 2h
 
 
+@bot.command()
+async def disableGlobalNotifications(context):
+    pdo = getPDO(context.guild.id)
+    channelId = pdo.getGlobalNotificationsChannelId()
+    if channelId is None : 
+        await context.send(">>> Les notifications globales sont déjà désactivées")
 
+    if channelId != str(context.channel.id) :
+        channelName = pdo.getGlobalNotificationsChannelName()
+        await context.send(f">>> Vous devez saisir la commande /disableGlobalNotifications dans le canal {channelName}")
+
+    else :
+        pdo.setGlobalNotificationsChannelId(None)
+        pdo.setGlobalNotificationsChannelName(None)
+        await context.send(">>> Notifications automatiques désactivées")
 
 
 @bot.command()
@@ -199,82 +300,156 @@ async def update(context):
     Args:
         context (ctx): the discord channel from where the bot is called
     """
-    global alwaysNotifyFlagz
-    global globalScoreboardShouldBeUpdated
-    global lastUpdate
+    print("update")
+    pdo = getPDO(context.guild.id)
 
     await context.send(">>> **Recherche de mises à jour**")
 
-    print("running")
     os.system('echo "Last run : $(date)" >> /tmp/logs.txt')
-    pdo = getPDO(context)
+    pdo = getPDO(context.guild.id)
     for user in pdo.getUsers() : 
         usernameID = user[0]
 
-        print(f'Looking for {usernameID}')
+        print(f' - Looking for {usernameID}')
 
         maj = await diffchecker.update(usernameID,context)
         
         for img in maj["images"] :
-            globalScoreboardShouldBeUpdated = True
+            pdo.setGlobalScoreboardShouldBeUpdated("1")
             with open(img ,'rb') as f:
                 picture = discord.File(f)
                 await context.send(file=picture)
             os.remove(img)
 
-    lastUpdate = datetime.now().strftime('%d/%m/%Y %H:%M:%S')
-    print("end")
+    pdo.setLastUpdate(datetime.now().strftime('%d/%m/%Y %H:%M:%S'))
+    print(" - END")
 
 
+######################################################
+###
+###              SCOREBOARD MANAGEMENT
+###
+######################################################
 
+async def __restartGlobalScoreboard(guildId,channelId) :
+    guild = await bot.fetch_guild(guildId)
+    channel = await guild.fetch_channel(channelId)
+    await channel.send(">>> Redémarrage du scoreboard global")
+
+    global ranks
+    pdo = getPDO(channel.guild.id)
+    globalScoreboardChannelId = channelId
+
+    while True : 
+        
+        if pdo.getGlobalScoreboardChannelId() != globalScoreboardChannelId :
+            channelName = pdo.getGlobalScoreboardChannelName()
+            await channel.send(f">>> Le scoreboard a été déplacé dans le canal suivant : {channelName}")
+            return
+
+        if pdo.getGlobalScoreboardShouldBeUpdated() == "1":
+
+            users = pdo.getUsers()
+
+            if len(users) == 0 :
+                await channel.send(">>> Aucun utilisateur enregistré")
+                
+            else :
+                message = f">>> **Classement général du serveur | {len(users)} membres**\n"
+                message += f"{pdo.getLastUpdate()}\n"
+
+                scoreboard =  sorted(users, key=lambda t: t[2], reverse=True)
+
+                for rank,(usernameID,usernameDN,points) in enumerate(scoreboard) : 
+                    if rank < len(ranks) :
+                        message += f"{ranks[rank]} - **{usernameDN}**\n"
+                    else :
+                        message += f"**{rank + 1}** - **{usernameDN}**\n"
+                    message += f"{points} points\n"
+
+                await channel.purge(limit=None)
+                await channel.send(message)
+
+            pdo.setGlobalScoreboardShouldBeUpdated("0")
+        await asyncio.sleep(60)
+    
 
 @bot.command()
-async def createGlobalScoreboard(context):
+async def enableGlobalScoreboard(context):
     """Create a global scoreboard with all players in and enable auto-update
 
     Args:
         context (ctx): the discord channel from where the bot is called
     """
-    global globalScoreboardShouldBeUpdated
-    global globalScoreboardLaunched
-    global lastUpdate
+    print("createGlobalScoreboard")
+    
+    global ranks
+    pdo = getPDO(context.guild.id)
+    globalScoreboardLaunched = pdo.getGlobalScoreboardChannelId()
+    
 
-    if globalScoreboardLaunched : 
-        await context.send(">>> Le scoreboard se mettra à jour automatiquement d'ici peu")
-        return 
-
-    globalScoreboardLaunched = True
-    await context.send(">>> Activation du scoreboard global dans ce canal")
-
-    pdo = getPDO(context)
+    if globalScoreboardLaunched == str(context.channel.id) :
+        await context.send(">>> Le scoreboard se mettra à jour automatiquement d'ici peu sur ce canal")
+        return
+    elif globalScoreboardLaunched != context.channel.id : 
+        pdo.setGlobalScoreboardChannelId(context.channel.id)
+        pdo.setGlobalScoreboardChannelName(context.channel.name)
+        await context.send(">>> Le scoreboard a été déplacé sur ce canal")
+    else :
+        pdo.setGlobalScoreboardChannelId(context.channel.id)
+        pdo.setGlobalScoreboardChannelName(context.channel.name)
+        await context.send(">>> Activation du scoreboard sur ce canal")
+        
 
     while True : 
-        if globalScoreboardShouldBeUpdated :
+        
+        if pdo.getGlobalScoreboardChannelId() != str(context.channel.id) :
+            channelName = pdo.getGlobalScoreboardChannelName()
+            await context.send(f">>> Le scoreboard a été déplacé dans le canal suivant : {channelName}")
+            return
 
-            global ranks
+        if pdo.getGlobalScoreboardShouldBeUpdated() == "1":
 
             users = pdo.getUsers()
 
             if len(users) == 0 :
                 await context.send(">>> Aucun utilisateur enregistré")
-                return
-            print(users)
-            message = f">>> **Classement général du serveur | {len(users)} membres**\n"
-            message += f"{lastUpdate}\n"
+                
+            else :
+                message = f">>> **Classement général du serveur | {len(users)} membres**\n"
+                message += f"{pdo.getLastUpdate()}\n"
 
-            scoreboard =  sorted(users, key=lambda t: t[2], reverse=True)
+                scoreboard =  sorted(users, key=lambda t: t[2], reverse=True)
 
-            for rank,(usernameID,usernameDN,points) in enumerate(scoreboard) : 
-                if rank < len(ranks) :
-                    message += f"{ranks[rank]} - **{usernameDN}**\n"
-                else :
-                    message += f"**{rank + 1}** - **{usernameDN}**\n"
-                message += f"{points} points\n"
+                for rank,(usernameID,usernameDN,points) in enumerate(scoreboard) : 
+                    if rank < len(ranks) :
+                        message += f"{ranks[rank]} - **{usernameDN}**\n"
+                    else :
+                        message += f"**{rank + 1}** - **{usernameDN}**\n"
+                    message += f"{points} points\n"
 
-            await context.channel.purge(limit=100)
-            await context.send(message)
-            globalScoreboardShouldBeUpdated = False
+                await context.channel.purge(limit=None)
+                await context.send(message)
+
+            pdo.setGlobalScoreboardShouldBeUpdated("0")
         await asyncio.sleep(60)
+
+
+@bot.command()
+async def disableGlobalScoreboard(context):
+    pdo = getPDO(context.guild.id)
+    channelId = pdo.getGlobalScoreboardChannelId()
+    if channelId is None :
+        await context.send(">>> Le scoreboard global n'est pas activé")
+
+    elif channelId != str(context.channel.id) :
+        channelName = pdo.getGlobalScoreboardChannelName()
+        await context.send(f">>> Vous devez saisir la commande /disableGlobalScoreboard dans le canal {channelName}")
+
+    else :
+        pdo.setGlobalScoreboardChannelId(None)
+        pdo.setGlobalScoreboardChannelName(None)
+        await context.send(">>> Scoreboard automatique désactivé")
 
 
 @bot.command()
@@ -284,11 +459,11 @@ async def scoreboard(context):
     Args:
         context (ctx): the discord channel from where the bot is called
     """
+    print("scoreboard")
 
     global ranks
-    global lastUpdate
 
-    pdo = getPDO(context)
+    pdo = getPDO(context.guild.id)
 
     users = pdo.getUsers()
 
@@ -297,7 +472,7 @@ async def scoreboard(context):
         return
 
     message = f">>> **Classement général du serveur | {len(users)} membres**\n"
-    message += f"{lastUpdate}\n"
+    message += f"{pdo.getLastUpdate()}\n"
 
     scoreboard =  sorted(users, key=lambda t: t[2], reverse=True)
     
@@ -307,21 +482,12 @@ async def scoreboard(context):
         else :
             message += f"**{rank + 1}** - **{usernameDN}**\n"
         message += f"{points} points\n"
-
     await context.send(message)
-
-
-
 
 
 if __name__ == '__main__' :
 
-    # Some variables to handle bruteforcers :(
-    alwaysNotifyFlagz = False
-    globalScoreboardLaunched = False
-    globalScoreboardShouldBeUpdated = True
-    lastUpdate = None
-
+    # Used to open and use only one database socket at the time for each discord server 
     PDOs = {}
 
     # Display some emojis instead of rank number
@@ -332,9 +498,6 @@ if __name__ == '__main__' :
 
     # Generate Notifications Images
     diffchecker = DiffChecker()
-
-    # Rank users
-    ranking = {}
 
     # Launch
     bot.run(os.getenv("discord_api_key"))

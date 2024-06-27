@@ -34,10 +34,11 @@ class IMG :
         img = Image.new(mode="RGBA", size=(700,280),color = (32,32,32))
         draw = ImageDraw.Draw(img)
 
+        # Commented because seems weird
         # Add RootMe's logo
-        logo_rootme = Image.open('img/rootme-logo.png')
-        logo_rootme = logo_rootme.resize((120,60))
-        img.paste(logo_rootme,(570,25),logo_rootme)
+        # logo_rootme = Image.open('img/rootme-logo.png')
+        # logo_rootme = logo_rootme.resize((120,60))
+        # img.paste(logo_rootme,(570,25),logo_rootme)
 
         # Add RootMe's title
         title_rootme = Image.open('img/rootme-title.png')

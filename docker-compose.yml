@@ -7,7 +7,7 @@ services:
     networks:
       - bridge
     volumes:
-      - ./src/db/database.sqlite:/app/db/database.sqlite
+      - ./src/db/:/app/db/
 
 networks:
   bridge:
