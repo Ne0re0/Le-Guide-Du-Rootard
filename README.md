@@ -10,6 +10,11 @@ Ce bot discord à pour objectif de permettre aux joueurs de Root-Me de se challe
 - D'être notifié lorsqu'un joueur ajoute un challenge à Root-Me
 - D'être notifié lorsqu'un joueur ajoute une solution à Root-Me
 
+# Features
+
+- Chaque serveur discord est indépendant et possède sa propre database
+- Lorsque le bot s'arrête, le simple fait de le redémarrer reprend toute activité laissée en suspend (comprendre que ça redémarre le scoreboard et les notifications automatiques s'ils étaient activés)  
+
 # Installation
 
 
