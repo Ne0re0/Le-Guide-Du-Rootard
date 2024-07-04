@@ -172,11 +172,10 @@ async def addUser(context,usernameID):
         
         # Updating user in the database without notifications
 
-        global globalScoreboardShouldBeUpdated
-
         maj = await diffchecker.update(usernameID,context)
         
-        globalScoreboardShouldBeUpdated = True
+        pdo = getPDO(context.guild.id)
+        pdo.setGlobalScoreboardShouldBeUpdated("1")
 
         await context.send(f">>> **Utilisateur `{usernameID}`:`{maj['usernameDN']}` ajouté**")
 

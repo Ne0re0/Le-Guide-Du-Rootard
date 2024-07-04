@@ -66,6 +66,8 @@ def create_db(path):
         # Commit the changes and close the connection
         conn.commit()
 
+        os.system(f"/bin/chmod 666 {path}")
+
         print(f"Database {path} created")
 
     except sqlite3.Error as error:
