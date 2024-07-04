@@ -21,7 +21,9 @@ def create_db(path):
         CREATE TABLE IF NOT EXISTS Autored (
             username TEXT,
             title TEXT,
-            PRIMARY KEY (username, title),
+            category TEXT,
+            type TEXT,
+            PRIMARY KEY (username, title, category, type),
             FOREIGN KEY (username) REFERENCES Users(usernameID)
         );
         '''
@@ -30,7 +32,8 @@ def create_db(path):
         CREATE TABLE IF NOT EXISTS Flagged (
             username TEXT,
             title TEXT,
-            PRIMARY KEY (username, title),
+            category TEXT,
+            PRIMARY KEY (username, title, category),
             FOREIGN KEY (username) REFERENCES Users(usernameID)
         );
         '''
@@ -151,38 +154,26 @@ class PDO:
         flagged = c.fetchall()
         return flagged
 
-    def insertFlagged(self, username, challTitle):
+    def insertFlagged(self, username, challTitle, category):
         """Add a flagged challenge by the given user
 
         Args:
             username (str): the username
             challTitle (str): the challenge's name
+            category (str): the challenge's category
 
         Returns:
             bool: True if insertion succeeded, false otherwise
         """
         c = self.conn.cursor()
         try:
-            c.execute("INSERT INTO Flagged (username, title) VALUES (?, ?);", (username, challTitle))
+            c.execute("INSERT INTO Flagged (username, title, category) VALUES (?, ?, ?);", (username, challTitle, category))
             self.conn.commit()
             return True 
         except sqlite3.Error as e:
             print(f"Exception in insertFlagged: {e}")
             return False
 
-    def getServerRank(self, challengeTitle):
-        """Returns the number of flag in the server for one given challenge
-
-        Args:
-            challengeTitle (str): the challenge name
-
-        Returns:
-            int: the rank in the server
-        """
-        c = self.conn.cursor()
-        c.execute("SELECT * FROM Flagged WHERE title=?;", (challengeTitle,))
-        resp = c.fetchall()
-        return len(resp)
 
     #
     #
@@ -196,14 +187,14 @@ class PDO:
             username (str): the username
 
         Returns:
-            list: all the flagged challenges stored in the database
+            list: all the autored challenges and write-ups stored in the database
         """
         c = self.conn.cursor()
         c.execute("SELECT * FROM Autored WHERE username=?;", (username,))
         autored = c.fetchall()
         return autored
 
-    def insertAutored(self, username, title):
+    def insertAutored(self, username, title, category, type):
         """Add an autored challenge or write-up by the given user
 
         Args:
@@ -215,7 +206,7 @@ class PDO:
         """
         c = self.conn.cursor()
         try:
-            c.execute("INSERT INTO Autored (username, title) VALUES (?, ?);", (username, title))
+            c.execute("INSERT INTO Autored (username, title, category, type) VALUES (?, ?, ?, ?);", (username, title, category, type))
             self.conn.commit()
             return True 
         except sqlite3.Error as e:

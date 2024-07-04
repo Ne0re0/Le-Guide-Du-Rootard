@@ -17,23 +17,26 @@ class DiffChecker:
         pdo.updateUsersPoints(usernameID,apidata['points'])
         pdo.updateUsersDN(usernameID,apidata['username'])
 
-        alreadyFlaggedChallenges = [row[1] for row in pdodataFlagz]
-        alreadyAutoredChallenges = [row[1] for row in pdodataContributions]
-
+        # List of tuples of the form [('challengeName','challengeCategory'),...]
+        alreadyFlaggedChallenges = [(row[1:3]) for row in pdodataFlagz]
+        # List of tuples of the form [('challengeName','challengeCategory','contributionType'),...]
+        # ContributionType is either "CHALLENGE" or "WRITE-UP"
+        alreadyAutoredChallenges = [(row[1:4]) for row in pdodataContributions]
+    
         for challenge in apidata["recentActivity"] : 
-            if challenge["name"] not in alreadyFlaggedChallenges :
+            if (challenge["name"],challenge["category"]) not in alreadyFlaggedChallenges :
                 diff["challenges"].append(challenge)
-                pdo.insertFlagged(usernameID,challenge["name"])
+                pdo.insertFlagged(usernameID,challenge["name"],challenge["category"])
         
         for challenge in apidata["contributions"]["challenges"] : 
-            if challenge["title"] not in alreadyAutoredChallenges :
+            if (challenge["title"],challenge["category"],"CHALLENGE") not in alreadyAutoredChallenges :
                 diff["contributions"]["challenges"].append(challenge)
-                pdo.insertAutored(usernameID,challenge["title"])
+                pdo.insertAutored(usernameID,challenge["title"],challenge["category"],"CHALLENGE")
         
         for challenge in apidata["contributions"]["solutions"] : 
-            if challenge["title"] not in alreadyAutoredChallenges :
+            if (challenge["title"],challenge["category"],"WRITE-UP") not in alreadyAutoredChallenges :
                 diff["contributions"]["solutions"].append(challenge)
-                pdo.insertAutored(usernameID,challenge["title"])
+                pdo.insertAutored(usernameID,challenge["title"],challenge["category"],"WRITE-UP")
 
         return diff
 
@@ -74,9 +77,8 @@ class DiffChecker:
                 apidata["points"],
                 challenge["name"],
                 challenge["category"],
-                challenge["logo"].split("?")[0],
-                pdo.getServerRank(challenge["name"])
-            )
+                challenge["logo"].split("?")[0]
+                )
             filename = re.escape(f"FLAG_{apidata['username']}_{challenge['name']}_{self.get_random_string(20)}")
             img.save(f"/tmp/{filename}.png")
             images.append(f"/tmp/{filename}.png")
@@ -90,10 +92,9 @@ class DiffChecker:
                 apidata["points"],
                 challenge["title"],
                 challenge["category"],
-                challenge["logo"].split("?")[0],
-                None
+                challenge["logo"].split("?")[0]
             )
-            filename = re.escape(f"CHALLENGE_{apidata['username']}_{challenge['name']}_{self.get_random_string(20)}")
+            filename = re.escape(f"CHALLENGE_{apidata['username']}_{challenge['title']}_{self.get_random_string(20)}")
             img.save(f"/tmp/{filename}.png")
             images.append(f"/tmp/{filename}.png")
         
@@ -106,10 +107,9 @@ class DiffChecker:
                 apidata["points"],
                 challenge["title"],
                 challenge["category"],
-                challenge["logo"].split("?")[0],
-                None
+                challenge["logo"].split("?")[0]
             )
-            filename = re.escape(f"WRITEUP_{apidata['username']}_{challenge['name']}_{self.get_random_string(20)}")
+            filename = re.escape(f"WRITEUP_{apidata['username']}_{challenge['title']}_{self.get_random_string(20)}")
             img.save(f"/tmp/{filename}.png")
             images.append(f"/tmp/{filename}.png")
     

@@ -252,11 +252,10 @@ async def enableGlobalNotifications(context):
 
         # Starts the update
         pdo.setLastUpdate("En cours")
-
         for user in pdo.getUsers() : 
             usernameID = user[0]
 
-            print(f'Looking for {usernameID}',end="")
+            print(f'{usernameID} ',end=" ")
 
             maj = await diffchecker.update(usernameID,context)
             
@@ -306,7 +305,7 @@ async def update(context):
     for user in pdo.getUsers() : 
         usernameID = user[0]
 
-        print(f' - Looking for {usernameID}')
+        print(f'{usernameID}',end=" ")
 
         maj = await diffchecker.update(usernameID,context)
         
@@ -316,9 +315,9 @@ async def update(context):
                 picture = discord.File(f)
                 await context.send(file=picture)
             os.remove(img)
+    print()
 
     pdo.setLastUpdate(datetime.now().strftime('%d/%m/%Y %H:%M:%S'))
-    print(" - END")
 
 
 ######################################################

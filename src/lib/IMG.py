@@ -14,7 +14,7 @@ class IMG :
     def __init__(self) :
         pass
 
-    def generateImage(self,title,username,userLogo,userScore,challengeName,challengeCategory,challengeLogo,serverRanking):
+    def generateImage(self,title,username,userLogo,userScore,challengeName,challengeCategory,challengeLogo):
         """Create an image to celebrate when a user flags a challenge
 
         Args:
@@ -57,20 +57,6 @@ class IMG :
         # Add challenge's category
         font = ImageFont.truetype('./img/fonts/bold-marker.ttf', 20)
         draw.text((100, 220), remove_accents(challengeCategory), fill="grey", font=font)
-
-        # Add server ranking
-
-        ##### The following code in commented because I did not found a way to retrieve all flagged challenges
-        ##### without using the API, so, no way to compute the serveur ranking correctly
-
-        # if serverRanking is not None :
-        #     font = ImageFont.truetype('./img/fonts/bold-marker.ttf', 15)
-        #     if serverRanking == 1 or serverRanking == "1" :
-        #         serverRanking = "1er du serveur"
-        #     else : 
-        #         serverRanking = f"{serverRanking}eme du serveur"
-
-        #     draw.text((40, 260), remove_accents(serverRanking), fill="grey", font=font)
 
         # Add username
         font = ImageFont.truetype('./img/fonts/bold-marker.ttf', 30)
