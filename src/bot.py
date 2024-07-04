@@ -115,8 +115,6 @@ async def start():
             asyncio.create_task(__restartGlobalScoreboard(serverId,globalScoreboardChannelId))
 
 
-    
-
 
 ######################################################
 ###
@@ -237,22 +235,19 @@ async def enableGlobalNotifications(context):
     alwaysNotifyFlagz = pdo.getGlobalNotificationsChannelId()
 
     if alwaysNotifyFlagz == str(context.channel.id) :
-        await context.send(">>> Les mises à jours automatiques sont déjà activées sur ce canal")
+        await context.send(">>> Les notifications sont déjà activées sur ce canal")
         return
     elif alwaysNotifyFlagz != context.channel.id : 
         pdo.setGlobalNotificationsChannelId(context.channel.id)
         pdo.setGlobalNotificationsChannelName(context.channel.name)
-        await context.send(">>> Les mises à jours automatiques ont été déplacées sur ce canal")
-    else :
-        pdo.setGlobalNotificationsChannelId(context.channel.id)
-        pdo.setGlobalNotificationsChannelName(context.channel.name)
-        await context.send(">>> Activation des mises à jour automatiques sur ce canal")
-        
+        await context.send(">>> Initialisation des notifications automatiques sur ce canal")
+
     while True :
 
         # Check that the notifying channel has not been changed
-        alwaysNotifyFlagz = pdo.getGlobalNotificationsChannelId()
-        if alwaysNotifyFlagz != str(context.channel.id) :
+        if pdo.getGlobalNotificationsChannelId() != str(context.channel.id) :
+            channelName = pdo.getGlobalNotificationsChannelName()
+            await context.send(f">>> Le scoreboard a été déplacé dans le canal suivant : {channelName}")
             return
 
         # Starts the update
@@ -261,7 +256,7 @@ async def enableGlobalNotifications(context):
         for user in pdo.getUsers() : 
             usernameID = user[0]
 
-            print(f'Looking for {usernameID}')
+            print(f'Looking for {usernameID}',end="")
 
             maj = await diffchecker.update(usernameID,context)
             
@@ -272,6 +267,7 @@ async def enableGlobalNotifications(context):
                     await context.send(file=picture)
                 os.remove(img)
 
+        print("\n")
         pdo.setLastUpdate(datetime.now().strftime('%d/%m/%Y %H:%M:%S'))
         await asyncio.sleep(7200) # 2h
 
@@ -342,7 +338,7 @@ async def __restartGlobalScoreboard(guildId,channelId) :
 
     while True : 
         
-        if pdo.getGlobalScoreboardChannelId() != globalScoreboardChannelId :
+        if pdo.getGlobalScoreboardChannelId() != globalScoreboardChannelId and pdo.getGlobalScoreboardChannelId() is not None :
             channelName = pdo.getGlobalScoreboardChannelName()
             await channel.send(f">>> Le scoreboard a été déplacé dans le canal suivant : {channelName}")
             return
@@ -387,23 +383,21 @@ async def enableGlobalScoreboard(context):
     pdo = getPDO(context.guild.id)
     globalScoreboardLaunched = pdo.getGlobalScoreboardChannelId()
     
-
+    # Case channel is the same
     if globalScoreboardLaunched == str(context.channel.id) :
         await context.send(">>> Le scoreboard se mettra à jour automatiquement d'ici peu sur ce canal")
         return
+    # Case channel move
     elif globalScoreboardLaunched != context.channel.id : 
         pdo.setGlobalScoreboardChannelId(context.channel.id)
         pdo.setGlobalScoreboardChannelName(context.channel.name)
-        await context.send(">>> Le scoreboard a été déplacé sur ce canal")
-    else :
-        pdo.setGlobalScoreboardChannelId(context.channel.id)
-        pdo.setGlobalScoreboardChannelName(context.channel.name)
-        await context.send(">>> Activation du scoreboard sur ce canal")
-        
+        pdo.setGlobalScoreboardShouldBeUpdated("1")
+        await context.send(">>> Le scoreboard a été initialisé sur ce canal")
+
 
     while True : 
         
-        if pdo.getGlobalScoreboardChannelId() != str(context.channel.id) :
+        if pdo.getGlobalScoreboardChannelId() != str(context.channel.id) and pdo.getGlobalScoreboardChannelId() is not None :
             channelName = pdo.getGlobalScoreboardChannelName()
             await context.send(f">>> Le scoreboard a été déplacé dans le canal suivant : {channelName}")
             return

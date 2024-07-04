@@ -20,7 +20,7 @@ class API :
             dict: the user's informations 
         """
         headers = {"User-Agent":self.ua_generator.getRandom()}
-        resp = requests.get(f"https://www.root-me.org/{username}?&lang=en",headers=headers)
+        resp = requests.get(f"https://www.root-me.org/{username}?&lang=en&debut_ao=0",headers=headers)
         if resp.status_code != 200 :
             return {"status_code":resp.status_code,"url":f"https://www.root-me.org/{username}?&lang=en"}
         soup = BeautifulSoup(resp.text, 'html.parser')

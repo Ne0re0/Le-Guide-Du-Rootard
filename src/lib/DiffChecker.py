@@ -7,6 +7,7 @@ from PIL import Image
 import string
 import random
 import asyncio
+import re
 
 class DiffChecker:
         
@@ -76,7 +77,7 @@ class DiffChecker:
                 challenge["logo"].split("?")[0],
                 pdo.getServerRank(challenge["name"])
             )
-            filename = self.get_random_string(20)
+            filename = re.escape(f"FLAG_{apidata['username']}_{challenge['name']}_{self.get_random_string(20)}")
             img.save(f"/tmp/{filename}.png")
             images.append(f"/tmp/{filename}.png")
         
@@ -92,7 +93,7 @@ class DiffChecker:
                 challenge["logo"].split("?")[0],
                 None
             )
-            filename = self.get_random_string(20)
+            filename = re.escape(f"CHALLENGE_{apidata['username']}_{challenge['name']}_{self.get_random_string(20)}")
             img.save(f"/tmp/{filename}.png")
             images.append(f"/tmp/{filename}.png")
         
@@ -108,7 +109,7 @@ class DiffChecker:
                 challenge["logo"].split("?")[0],
                 None
             )
-            filename = self.get_random_string(20)
+            filename = re.escape(f"WRITEUP_{apidata['username']}_{challenge['name']}_{self.get_random_string(20)}")
             img.save(f"/tmp/{filename}.png")
             images.append(f"/tmp/{filename}.png")
     
