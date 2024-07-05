@@ -24,7 +24,6 @@ class API :
         if resp.status_code != 200 :
             return {"status_code":resp.status_code,"url":f"https://www.root-me.org/{username}?&lang=en"}
         soup = BeautifulSoup(resp.text, 'html.parser')
-
         data = {}
         data["username"] = self.__getUsername(soup)
         data['points'] = self.__getPoints(soup)
@@ -73,8 +72,8 @@ class API :
     def __getBiography(self,soup) :
         """Returns the biography"""
         try :
-            repere = soup.find("li",{"class":"crayon auteur-bio-323925"})
-            biography = repere.find("p").getText()
+            repere = soup.find("li",{"itemprop":"description"})
+            biography = repere.find_next("p").getText()
             return biography
         except Exception: 
             return ''
@@ -169,5 +168,11 @@ class API :
         except Exception :
             pass
 
-
         return contributions
+
+
+if __name__ == '__main__' : 
+    api = API()
+    print(api.getUser("g0uZ"))
+
+
