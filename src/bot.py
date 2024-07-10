@@ -316,7 +316,7 @@ async def update(context):
     print()
 
     if not changes : 
-        context.send(">>> Aucune mise à jour n'a été trouvée")
+        await context.send(">>> Aucune mise à jour n'a été trouvée")
 
     pdo.setLastUpdate(datetime.now().strftime('%d/%m/%Y %H:%M:%S'))
 
