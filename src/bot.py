@@ -200,9 +200,6 @@ async def __restartGlobalNotifications(guildId,channelId) :
         if alwaysNotifyFlagz != pdo.getGlobalNotificationsChannelId() :
             return
 
-        # Starts the update
-        pdo.setLastUpdate("En cours")
-
         for user in pdo.getUsers() : 
             usernameID = user[0]
 

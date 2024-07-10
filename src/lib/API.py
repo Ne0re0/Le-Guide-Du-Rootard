@@ -86,19 +86,21 @@ class API :
 
     def __getRecentActivity(self,soup) :
         """Returns the last 10 solved challenges"""
-        img_tag = soup.find('img', {'src': 'squelettes/img/activitees.svg?1570951387',"width":"32"})
-        challenges = img_tag.find_next('ul').children
-        challenges = [chall for chall in challenges if "li" in f"{chall}"]
-        data = []
-        for i,challenge in enumerate(challenges) : 
-            data.append({})
-            data[i]["logo"] = challenge.find("img")['src']
-            data[i]["name"] = challenge.find("a").getText()
-            data[i]["date"] = challenge.find("span").getText()
-            data[i]["link"] = challenge.find("a")["href"]
-            data[i]["category"] = " ".join(data[i]["link"].split("/")[2].split("-"))
+        try :
+            img_tag = soup.find('img', {'src': 'squelettes/img/activitees.svg?1570951387',"width":"32"})
+            challenges = img_tag.find_next('ul').children
+            challenges = [chall for chall in challenges if "li" in f"{chall}"]
+            data = []
+            for i,challenge in enumerate(challenges) : 
+                data.append({})
+                data[i]["logo"] = challenge.find("img")['src']
+                data[i]["name"] = challenge.find("a").getText()
+                data[i]["date"] = challenge.find("span").getText()
+                data[i]["link"] = challenge.find("a")["href"]
+                data[i]["category"] = " ".join(data[i]["link"].split("/")[2].split("-"))
 
-        return data
+            return data
+        return []
 
     def __getValidations(self,soup) :
         """Returns the percentage of solves challenges from the different categories"""
