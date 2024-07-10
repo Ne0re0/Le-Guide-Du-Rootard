@@ -100,7 +100,8 @@ class API :
                 data[i]["category"] = " ".join(data[i]["link"].split("/")[2].split("-"))
 
             return data
-        return []
+        except :
+            return []
 
     def __getValidations(self,soup) :
         """Returns the percentage of solves challenges from the different categories"""
