@@ -37,17 +37,17 @@ async def help(context):
     message += "\n"
     message += "Le guide du rootard saura te mener sur le bonne root\n"
     message += "\n"
-    message += "- **/help** : Affiche ce message"
-    message += "- **/ping** : pong"
-    message += "- **/pong** : ping"
-    message += "- **/source** : Affiche l'adresse du code source"
-    message += "- **/status** : Donne le statut des différentes variables"
-    message += "- **/getUsers** : Liste les utilisateurs enregistrés"
-    message += "- **/addUser usernameID** : Ajoute un utilisateur à la base de données"
-    message += "- **/enableGlobalNotifications** : Défini un salon comme cible pour les notifications de flag"
-    message += "- **/enableGlobalScoreboard** : Crée un scoreboard global qui se mettra à jour automatiquement"
-    message += "- **/update** : Met à jour chaque utilisateur avec les informations de root-me"
-    message += "- **/scoreboard** : Affiche le scoreboard"
+    message += "- **/help** : Affiche ce message\n"
+    message += "- **/ping** : pong\n"
+    message += "- **/pong** : ping\n"
+    message += "- **/source** : Affiche l'adresse du code source\n"
+    message += "- **/status** : Donne le statut des différentes variables\n"
+    message += "- **/getUsers** : Liste les utilisateurs enregistrés\n"
+    message += "- **/addUser usernameID** : Ajoute un utilisateur à la base de données\n"
+    message += "- **/enableGlobalNotifications** : Défini un salon comme cible pour les notifications de flag\n"
+    message += "- **/enableGlobalScoreboard** : Crée un scoreboard global qui se mettra à jour automatiquement\n"
+    message += "- **/update** : Met à jour chaque utilisateur avec les informations de root-me\n"
+    message += "- **/scoreboard** : Affiche le scoreboard\n"
     message += "\n"
     await context.send(message)
 
@@ -293,6 +293,7 @@ async def update(context):
     """
     print("update")
     pdo = getPDO(context.guild.id)
+    changes = False
 
     await context.send(">>> **Recherche de mises à jour**")
 
@@ -306,12 +307,16 @@ async def update(context):
         maj = await diffchecker.update(usernameID,context)
         
         for img in maj["images"] :
+            changes = True
             pdo.setGlobalScoreboardShouldBeUpdated("1")
             with open(img ,'rb') as f:
                 picture = discord.File(f)
                 await context.send(file=picture)
             os.remove(img)
     print()
+
+    if not changes : 
+        context.send(">>> Aucune mise à jour n'a été trouvée")
 
     pdo.setLastUpdate(datetime.now().strftime('%d/%m/%Y %H:%M:%S'))
 
