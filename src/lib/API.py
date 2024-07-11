@@ -20,24 +20,27 @@ class API :
             dict: the user's informations 
         """
         headers = {"User-Agent":self.ua_generator.getRandom()}
-        resp = requests.get(f"https://www.root-me.org/{username}?&lang=en&debut_ao=0&debut_challenges_auteur=0&debut_articles_auteur=0",headers=headers)
-        if resp.status_code != 200 :
-            return {"status_code":resp.status_code,"url":f"https://www.root-me.org/{username}?&lang=en"}
-        soup = BeautifulSoup(resp.text, 'html.parser')
-        data = {}
-        data["username"] = self.__getUsername(soup)
-        data['points'] = self.__getPoints(soup)
-        data['position'] = self.__getPosition(soup)
-        data['flagNumber'] = self.__getFlagNumber(soup)
-        data['profilePicture'] = self.__getProfilePicture(soup)
-        data['biography'] = self.__getBiography(soup)
-        data['compromissionNumber'] = self.__getCompromissionNumber(soup)
-        data['recentActivity'] = self.__getRecentActivity(soup)
-        data['validations'] = self.__getValidations(soup)
-        data['badges'] = self.__getBadges(soup)
-        data['contributions'] = self.__getContributions(soup)
+        try :
+            resp = requests.get(f"https://www.root-me.org/{username}?&lang=en&debut_ao=0&debut_challenges_auteur=0&debut_articles_auteur=0",headers=headers, timeout=10)
+            if resp.status_code != 200 :
+                return {"status_code":resp.status_code,"url":f"https://www.root-me.org/{username}?&lang=en"}
+            soup = BeautifulSoup(resp.text, 'html.parser')
+            data = {}
+            data["username"] = self.__getUsername(soup)
+            data['points'] = self.__getPoints(soup)
+            data['position'] = self.__getPosition(soup)
+            data['flagNumber'] = self.__getFlagNumber(soup)
+            data['profilePicture'] = self.__getProfilePicture(soup)
+            data['biography'] = self.__getBiography(soup)
+            data['compromissionNumber'] = self.__getCompromissionNumber(soup)
+            data['recentActivity'] = self.__getRecentActivity(soup)
+            data['validations'] = self.__getValidations(soup)
+            data['badges'] = self.__getBadges(soup)
+            data['contributions'] = self.__getContributions(soup)
+            return data
 
-        return data
+        except requests.exceptions.Timeout:
+            return {"status_code":"Timeout","url":f"https://www.root-me.org/{username}?&lang=en"}
 
     def __getUsername(self,soup) :
         """Returns the username"""

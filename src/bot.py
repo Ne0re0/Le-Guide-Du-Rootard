@@ -155,7 +155,7 @@ async def addUser(context,usernameID):
         print("addUser")
         res = api.getUser(usernameID)
         timer = 5
-        while "status_code" in res.keys() and res["status_code"] == 429 :
+        while "status_code" in res.keys() and res["status_code"] != 200 :
             await asyncio.sleep(timer)
             res = api.getUser(usernameID)
             timer += 5
