@@ -188,14 +188,14 @@ async def addUser(context,usernameID):
 async def __restartGlobalNotifications(guildId,channelId) :
     guild = await bot.fetch_guild(guildId)
     channel = await guild.fetch_channel(channelId)
-    await channel.send(">>> Redémarrage des notifications globales")
+    # await channel.send(">>> Redémarrage des notifications globales")
     
     pdo = getPDO(channel.guild.id)
 
     alwaysNotifyFlagz = channelId
 
     while True :
-
+        print("__restartGlobalNotifications")
         # Check that the notifying channel has not been changed
         if alwaysNotifyFlagz != pdo.getGlobalNotificationsChannelId() :
             return
@@ -337,7 +337,8 @@ async def __restartGlobalScoreboard(guildId,channelId) :
     globalScoreboardChannelId = channelId
 
     while True : 
-        
+        print("__restartGlobalScoreboard")
+
         if pdo.getGlobalScoreboardChannelId() != globalScoreboardChannelId and pdo.getGlobalScoreboardChannelId() is not None :
             channelName = pdo.getGlobalScoreboardChannelName()
             await channel.send(f">>> Le scoreboard a été déplacé dans le canal suivant : {channelName}")
