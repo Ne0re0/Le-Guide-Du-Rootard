@@ -1,6 +1,8 @@
 
 **/__pycache__/
 src/lib/__pycache__/
+src/lib/RootMe/__pycache__/
+src/lib/HackTheBox/__pycache__/
 
 push.sh
 .obsidian
@@ -10,3 +12,6 @@ src/db/*.sqlite
 
 src/img/IMG/logo/*
 !src/img/IMG/logo/foo
+
+logs/*
+!logs/.placeholder

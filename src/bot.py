@@ -4,17 +4,16 @@ import discord
 from discord.ext import commands
 import asyncio
 import os
-from lib.PDO import PDO
-from lib.DiffChecker import DiffChecker
-import os
 from dotenv import load_dotenv
 from datetime import datetime
-from lib.API import API
+
+from lib.RootMe.PDO import PDO
+from lib.RootMe.DiffChecker import DiffChecker
+from lib.RootMe.API import API
 
 load_dotenv()
 
-bot = commands.Bot(command_prefix="/", description="Le guide du routard", intents=discord.Intents.all())
-
+bot = commands.Bot(command_prefix="/", description="Le guide du rootard", intents=discord.Intents.all())
 
 def getPDO(guildId) : 
     global PDOs

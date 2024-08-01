@@ -1,8 +1,8 @@
 #!/bin/python
 
-from lib.PDO import PDO
-from lib.API import API
-from lib.IMG import IMG
+from lib.RootMe.PDO import PDO
+from lib.RootMe.API import API
+from lib.RootMe.IMG import IMG
 from PIL import Image
 import string
 import random
@@ -11,17 +11,17 @@ import re
 
 class DiffChecker:
         
-    def getDiff(self,apidata,pdodataFlagz,pdodataContributions,pdo,usernameID) :
+    def getDiff(self,apidata,storedDataFlaggedTable,storedDataAutoredTable,pdo,usernameID) :
 
         diff = {"challenges": [], "contributions": {"challenges" : [], "solutions": []}}
         pdo.updateUsersPoints(usernameID,apidata['points'])
         pdo.updateUsersDN(usernameID,apidata['username'])
 
         # List of tuples of the form [('challengeName','challengeCategory'),...]
-        alreadyFlaggedChallenges = [(row[1:3]) for row in pdodataFlagz]
+        alreadyFlaggedChallenges = [(row[1:3]) for row in storedDataFlaggedTable]
         # List of tuples of the form [('challengeName','challengeCategory','contributionType'),...]
         # ContributionType is either "CHALLENGE" or "WRITE-UP"
-        alreadyAutoredChallenges = [(row[1:4]) for row in pdodataContributions]
+        alreadyAutoredChallenges = [(row[1:4]) for row in storedDataAutoredTable]
     
         for challenge in apidata["recentActivity"] : 
             if (challenge["name"],challenge["category"]) not in alreadyFlaggedChallenges :
@@ -62,10 +62,10 @@ class DiffChecker:
             await asyncio.sleep(timer)
             timer += 5
 
-        pdodataFlagz = pdo.getFlagged(usernameID)
-        pdodataContributions = pdo.getAutored(usernameID)
+        storedDataFlaggedTable = pdo.getFlagged(usernameID)
+        storedDataAutoredTable = pdo.getAutored(usernameID)
 
-        diff = self.getDiff(apidata,pdodataFlagz,pdodataContributions,pdo,usernameID)
+        diff = self.getDiff(apidata,storedDataFlaggedTable,storedDataAutoredTable,pdo,usernameID)
 
         # generate images for new challenges solved
         for challenge in diff["challenges"] : 
