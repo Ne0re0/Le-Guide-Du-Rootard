@@ -41,6 +41,7 @@ J'ai oublié comment il faut faire XD
 
 **Local**
 ```bash
+pip3 install -r requirements.txt
 python3 start
 ```
 
