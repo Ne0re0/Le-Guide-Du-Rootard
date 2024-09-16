@@ -20,7 +20,7 @@ Ce bot discord à pour objectif de permettre aux joueurs de Root-Me de se challe
 
 ```bash
 sudo apt-get update -y
-sudo apt-get install git
+sudo apt-get install git docker-compose -y
 git clone https://github.com/Ne0re0/Le-Guide-Du-Rootard.git
 cd Le-Guide-Du-Rootard
 ./installer.sh # Installer les librairies et packages
