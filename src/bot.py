@@ -7,9 +7,9 @@ import os
 from dotenv import load_dotenv
 from datetime import datetime
 
-from lib.RootMe.PDO import PDO
-from lib.RootMe.DiffChecker import DiffChecker
-from lib.RootMe.API import API
+from local_libs.RootMe.PDO import PDO
+from local_libs.RootMe.DiffChecker import DiffChecker
+from local_libs.RootMe.API import API
 
 load_dotenv()
 

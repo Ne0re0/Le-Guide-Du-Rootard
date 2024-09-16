@@ -1,8 +1,8 @@
 #!/bin/python
 
-from lib.RootMe.PDO import PDO
-from lib.RootMe.API import API
-from lib.RootMe.IMG import IMG
+from local_libs.RootMe.PDO import PDO
+from local_libs.RootMe.API import API
+from local_libs.RootMe.IMG import IMG
 from PIL import Image
 import string
 import random

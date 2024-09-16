@@ -1,6 +1,6 @@
 import requests
 from bs4 import BeautifulSoup
-from lib.RootMe.UserAgents import UserAgents
+from local_libs.RootMe.UserAgents import UserAgents
 
 class API :
 
