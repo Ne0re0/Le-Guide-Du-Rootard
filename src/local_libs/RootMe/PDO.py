@@ -58,6 +58,8 @@ def create_db(path):
             ('globalScoreboardChannelName', None),
             ('globalNotificationsChannelId', None),
             ('globalNotificationsChannelName', None),
+            ('adminChannelId', None),
+            ('adminChannelName', None),
             ('globalScoreboardShouldBeUpdated', "1"),
             ('lastUpdate', None)
         ]
@@ -100,6 +102,12 @@ class PDO:
         if self.conn:
             self.conn.close()
 
+    def getNbUsers(self):
+        c = self.conn.cursor()
+        c.execute("SELECT count(*) FROM Users;")
+        nb = c.fetchone()
+        return nb
+    
     def getUsers(self):
         c = self.conn.cursor()
         c.execute("SELECT * FROM Users;")
@@ -115,6 +123,18 @@ class PDO:
         except sqlite3.Error as e:
             print(f"Exception in insertUser: {e}")
             return False
+    
+    def deleteUser(self, usernameID):
+        c = self.conn.cursor()
+        try:
+            # Utiliser un tuple (note la virgule après usernameID pour créer un tuple de longueur 1)
+            c.execute("DELETE FROM Users WHERE usernameID = ?;", (usernameID,))
+            self.conn.commit()
+            return True
+        except sqlite3.Error as e:
+            print(f"Exception in deleteUser: {e}")
+            return False
+
     
     def updateUsersPoints(self, usernameID, points):
         c = self.conn.cursor()
@@ -287,3 +307,25 @@ class PDO:
         c.execute("UPDATE Informations SET value = ? WHERE key='lastUpdate';", (value,))
         self.conn.commit()
 
+
+    def getAdminChannelId(self):
+        c = self.conn.cursor()
+        c.execute('SELECT value FROM Informations WHERE key = ?', ('adminChannelId',))
+        result = c.fetchone()
+        return result[0] if result else None
+
+    def setAdminChannelId(self, value):
+        c = self.conn.cursor()
+        c.execute("UPDATE Informations SET value = ? WHERE key='adminChannelId';", (value,))
+        self.conn.commit()
+
+    def getAdminChannelName(self):
+        c = self.conn.cursor()
+        c.execute('SELECT value FROM Informations WHERE key = ?', ('adminChannelName',))
+        result = c.fetchone()
+        return result[0] if result else None
+
+    def setAdminChannelName(self, value):
+        c = self.conn.cursor()
+        c.execute("UPDATE Informations SET value = ? WHERE key='adminChannelName';", (value,))
+        self.conn.commit()
