@@ -61,7 +61,8 @@ def create_db(path):
             ('adminChannelId', None),
             ('adminChannelName', None),
             ('globalScoreboardShouldBeUpdated', "1"),
-            ('lastUpdate', None)
+            ('lastUpdate', None),
+            ('nextUpdate', None)
         ]
         cursor.executemany('INSERT OR IGNORE INTO Informations (key, value) VALUES (?, ?);', initial_data)
 
@@ -305,6 +306,17 @@ class PDO:
     def setLastUpdate(self, value):
         c = self.conn.cursor()
         c.execute("UPDATE Informations SET value = ? WHERE key='lastUpdate';", (value,))
+        self.conn.commit()
+
+    def getNextUpdate(self):
+        c = self.conn.cursor()
+        c.execute('SELECT value FROM Informations WHERE key = ?', ('nextUpdate',))
+        result = c.fetchone()
+        return result[0] if result else None
+
+    def setNextUpdate(self, value):
+        c = self.conn.cursor()
+        c.execute("UPDATE Informations SET value = ? WHERE key='nextUpdate';", (value,))
         self.conn.commit()
 
 

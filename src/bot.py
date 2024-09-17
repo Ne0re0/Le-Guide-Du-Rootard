@@ -6,11 +6,12 @@ from discord.utils import get
 import asyncio
 import os
 from dotenv import load_dotenv
-from datetime import datetime
+from datetime import datetime,timedelta
 
 from local_libs.RootMe.PDO import PDO
 from local_libs.RootMe.DiffChecker import DiffChecker
 from local_libs.RootMe.API import API
+from random import randint
 
 load_dotenv()
 
@@ -82,12 +83,14 @@ async def source(context):
 @bot.command()
 async def status(context):
 
+    print("/status")
     pdo = getPDO(context.guild.id)
 
     notificationChannel = pdo.getGlobalNotificationsChannelName()
     scoreboardChannel = pdo.getGlobalScoreboardChannelName()
     adminChannel = pdo.getAdminChannelName()
     lastUpdate = pdo.getLastUpdate()
+    nextUpdate = pdo.getNextUpdate()
 
     message = ">>> **Status**\n\n"
     
@@ -107,6 +110,7 @@ async def status(context):
         message += f"**Le canal d'administration n'est pas établi**\n"
 
     message += f"**Dernière update :** {lastUpdate}\n"
+    message += f"**Prochaine update :** {nextUpdate}\n"
 
     await context.send(message)
 
@@ -120,15 +124,19 @@ async def status(context):
 async def setAdminChannel(context):
     
     pdo = getPDO(context.guild.id)
+    
+    print("/setAdminChannel ",end="")
 
     adminChannelName = pdo.getAdminChannelName()
     adminChannelId = pdo.getAdminChannelId()
     
     if adminChannelId == str(context.channel.id) : 
         await context.send(f"Le canal d'administration est déjà établi dans ce même salon")
+        print("FAIL Admin channel is another channel")
         return
 
     if adminChannelName is not None : 
+        print("FAIL Channel already enable")
         await context.send(f"Le canal d'administration est déjà établi dans ce salon : {adminChannelName}")
         return
     
@@ -139,9 +147,11 @@ async def setAdminChannel(context):
     adminChannelName = pdo.getAdminChannelName()
 
     if adminChannelName is None :
+        print("FAIL Server Error")
         await context.send(f"Erreur lors de la définition du canal d'administration")
         return
     
+    print("SUCCESS")
     await context.send(f"Le canal d'administration a été défini avec succès")
 
 
@@ -149,22 +159,29 @@ async def setAdminChannel(context):
 @bot.command()
 async def unsetAdminChannel(context):
     
+    try :
+        assert await isSentFromAdminChannel(context), "/getUsers has not been sent from admin channel"
+    except :
+        print("/unsetAdminChannel called from a random channel")
+        return
+    
+    print("/unsetAdminChannel ",end="")
+
     pdo = getPDO(context.guild.id)
 
     adminChannelName = pdo.getAdminChannelName()
     adminChannelId = pdo.getAdminChannelId()
     
     if adminChannelId is None : 
+        print("FAIL Not any admin channel is defined")
         await context.send(f"Aucun canal d'administration n'est défini")
         return
 
-    if adminChannelId != str(context.channel.id) : 
-        await context.send(f"Pour désactiver le canal d'administration, saisissez /unsetAdminChannel dans le canal {adminChannelName}")
-        return
     
     pdo.setAdminChannelName(None)
     pdo.setAdminChannelId(None)
     
+    print("SUCCESS Admin channel unset")
     await context.send(f"Canal d'administration désactivé, veuillez l'activer avec /setAdminChannel dans un autre canal pour poursuivre l'administration")
 
     
@@ -264,7 +281,7 @@ async def addUser(context,usernameID):
         return
     
     if len(usernameID) > 0 :
-        print("addUser")
+        print(f"/addUser {usernameID} ",end="")
         res = api.getUser(usernameID)
         timer = 5
         while "status_code" in res.keys() and res["status_code"] != 200 :
@@ -273,12 +290,14 @@ async def addUser(context,usernameID):
             timer += 5
 
         if "status_code" in res.keys() and res["status_code"] == 404 :
+            print("FAIL 404 User does not exist")
             await context.send(f">>> **Utilisateur introuvable** \n\nVérifiez que le nom renseigné est bien celui avec lequel vous accédez au profil public avec https://www.root-me.org/{usernameID}")
             return 
 
         pdo = getPDO(context.guild.id)
         resp = pdo.insertUser(usernameID,None,None)
         if not resp : 
+            print("FAIL User already registered")
             await context.send(">>> **Utilisateur existant**")
             return
         
@@ -289,6 +308,7 @@ async def addUser(context,usernameID):
         pdo = getPDO(context.guild.id)
         pdo.setGlobalScoreboardShouldBeUpdated("1")
 
+        print("SUCCESS User registered")
         await context.send(f">>> **Utilisateur `{usernameID}`:`{maj['usernameDN']}` ajouté**")
 
 
@@ -308,16 +328,18 @@ async def removeUser(context,usernameID):
     except :
         print(f"/removeUser {usernameID} called from a random channel")
         return
-    print(f"/removeUser {usernameID}")
+    print(f"/removeUser {usernameID} ",end="")
     pdo = getPDO(context.guild.id)
     
     nbUsers = pdo.getNbUsers()
     pdo.deleteUser(usernameID)
 
     if nbUsers == pdo.getNbUsers() :
+        print(f"FAIL User {usernameID} not found in database")
         await context.send(f">>> **Utilisateur `{usernameID}` introuvable**")
 
     else :
+        print(f"SUCCESS {usernameID} deleted")
         pdo.setGlobalScoreboardShouldBeUpdated("1")
         await context.send(f">>> **Utilisateur `{usernameID}` supprimé**")
 
@@ -357,7 +379,12 @@ async def __restartGlobalNotifications(guildId,channelId) :
                 os.remove(img)
 
         pdo.setLastUpdate(datetime.now().strftime('%d/%m/%Y %H:%M:%S'))
-        await asyncio.sleep(7200) # 2h
+        timer = 6200 + randint(-1000,1000)
+        
+        next_update_time = datetime.now() + timedelta(seconds=timer)    
+            
+        pdo.setNextUpdate(next_update_time.strftime('%d/%m/%Y %H:%M:%S'))
+        await asyncio.sleep(timer)
 
 
 @bot.command()
@@ -421,9 +448,13 @@ async def enableGlobalNotifications(context, channelName):
                     await channel.send(file=picture)
                 os.remove(img)
 
-        print("\n")
         pdo.setLastUpdate(datetime.now().strftime('%d/%m/%Y %H:%M:%S'))
-        await asyncio.sleep(7200) # 2h
+        timer = 6200 + randint(-1000,1000)
+        
+        next_update_time = datetime.now() + timedelta(seconds=timer)    
+            
+        pdo.setNextUpdate(next_update_time.strftime('%d/%m/%Y %H:%M:%S'))
+        await asyncio.sleep(timer)
 
 
 @bot.command()
@@ -579,6 +610,7 @@ async def disableGlobalScoreboard(context):
     
     try :
         assert await isSentFromAdminChannel(context), "/disableGlobalScoreboard has not been sent from admin channel"
+        print(f"/disableGlobalScoreboard")
     except :
         print(f"/disableGlobalScoreboard called from a random channel")
         return
