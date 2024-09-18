@@ -471,10 +471,6 @@ async def disableGlobalNotifications(context):
     if channelId is None : 
         await context.send(">>> Les notifications globales sont déjà désactivées")
 
-    if channelId != str(context.channel.id) :
-        channelName = pdo.getGlobalNotificationsChannelName()
-        await context.send(f">>> Vous devez saisir la commande /disableGlobalNotifications dans le canal {channelName}")
-
     else :
         pdo.setGlobalNotificationsChannelId(None)
         pdo.setGlobalNotificationsChannelName(None)
@@ -619,10 +615,6 @@ async def disableGlobalScoreboard(context):
     channelId = pdo.getGlobalScoreboardChannelId()
     if channelId is None :
         await context.send(">>> Le scoreboard global n'est pas activé")
-
-    elif channelId != str(context.channel.id) :
-        channelName = pdo.getGlobalScoreboardChannelName()
-        await context.send(f">>> Vous devez saisir la commande /disableGlobalScoreboard dans le canal {channelName}")
 
     else :
         pdo.setGlobalScoreboardChannelId(None)
