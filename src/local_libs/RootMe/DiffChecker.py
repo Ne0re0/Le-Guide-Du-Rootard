@@ -26,17 +26,17 @@ class DiffChecker:
         for challenge in apidata["recentActivity"] : 
             if (challenge["name"],challenge["category"]) not in alreadyFlaggedChallenges :
                 diff["challenges"].append(challenge)
-                pdo.insertFlagged(usernameID,challenge["name"],challenge["category"])
+                pdo.insertFlagged(usernameID.upper(),challenge["name"],challenge["category"])
         
         for challenge in apidata["contributions"]["challenges"] : 
             if (challenge["title"],challenge["category"],"CHALLENGE") not in alreadyAutoredChallenges :
                 diff["contributions"]["challenges"].append(challenge)
-                pdo.insertAutored(usernameID,challenge["title"],challenge["category"],"CHALLENGE")
+                pdo.insertAutored(usernameID.upper(),challenge["title"],challenge["category"],"CHALLENGE")
         
         for challenge in apidata["contributions"]["solutions"] : 
             if (challenge["title"],challenge["category"],"WRITE-UP") not in alreadyAutoredChallenges :
                 diff["contributions"]["solutions"].append(challenge)
-                pdo.insertAutored(usernameID,challenge["title"],challenge["category"],"WRITE-UP")
+                pdo.insertAutored(usernameID.upper(),challenge["title"],challenge["category"],"WRITE-UP")
 
         return diff
 
