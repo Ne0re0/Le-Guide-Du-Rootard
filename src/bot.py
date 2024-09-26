@@ -280,6 +280,8 @@ async def addUser(context,usernameID):
         print(f"/addUser {usernameID} called from a random channel")
         return
     
+    usernameID = usernameID.upper()
+    
     if len(usernameID) > 0 :
         print(f"/addUser {usernameID} ",end="")
         res = api.getUser(usernameID)
@@ -295,7 +297,7 @@ async def addUser(context,usernameID):
             return 
 
         pdo = getPDO(context.guild.id)
-        resp = pdo.insertUser(usernameID.upper(),None,None)
+        resp = pdo.insertUser(usernameID,None,None)
         if not resp : 
             print("FAIL User already registered")
             await context.send(">>> **Utilisateur existant**")
@@ -328,6 +330,7 @@ async def removeUser(context,usernameID):
     except :
         print(f"/removeUser {usernameID} called from a random channel")
         return
+    usernameID = usernameID.upper()
     print(f"/removeUser {usernameID} ",end="")
     pdo = getPDO(context.guild.id)
     
