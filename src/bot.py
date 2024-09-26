@@ -330,6 +330,7 @@ async def removeUser(context,usernameID):
     except :
         print(f"/removeUser {usernameID} called from a random channel")
         return
+    
     usernameID = usernameID.upper()
     print(f"/removeUser {usernameID} ",end="")
     pdo = getPDO(context.guild.id)
