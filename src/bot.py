@@ -295,7 +295,7 @@ async def addUser(context,usernameID):
             return 
 
         pdo = getPDO(context.guild.id)
-        resp = pdo.insertUser(usernameID,None,None)
+        resp = pdo.insertUser(usernameID.upper(),None,None)
         if not resp : 
             print("FAIL User already registered")
             await context.send(">>> **Utilisateur existant**")
@@ -451,7 +451,8 @@ async def enableGlobalNotifications(context, channelName):
         pdo.setLastUpdate(datetime.now().strftime('%d/%m/%Y %H:%M:%S'))
         timer = 6200 + randint(-1000,1000)
         
-        next_update_time = datetime.now() + timedelta(seconds=timer)    
+        timerAnd5Min = timer + 5*60
+        next_update_time = datetime.now() + timedelta(seconds=timerAnd5Min)    
             
         pdo.setNextUpdate(next_update_time.strftime('%d/%m/%Y %H:%M:%S'))
         await asyncio.sleep(timer)
