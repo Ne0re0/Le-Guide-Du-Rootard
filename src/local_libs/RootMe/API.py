@@ -41,6 +41,8 @@ class API :
 
         except requests.exceptions.Timeout:
             return {"status_code":"Timeout","url":f"https://www.root-me.org/{username}?&lang=en"}
+        except Exception :
+            return {"status_code":"Error","url":f"https://www.root-me.org/{username}?&lang=en"}
 
     def __getUsername(self,soup) :
         """Returns the username"""
