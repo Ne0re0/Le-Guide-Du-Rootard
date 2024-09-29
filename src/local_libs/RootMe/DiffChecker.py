@@ -55,12 +55,12 @@ class DiffChecker:
         images = []
 
         apidata = api.getUser(usernameID)
-        timer = 5
+        timer = 10
         while "status_code" in apidata.keys() : 
             print(f'Status code {apidata["status_code"]} for {apidata["url"]}, retrying in {timer} seconds')
             apidata = api.getUser(usernameID)
             await asyncio.sleep(timer)
-            timer += 5
+            timer += 10
 
         storedDataFlaggedTable = pdo.getFlagged(usernameID)
         storedDataAutoredTable = pdo.getAutored(usernameID)
