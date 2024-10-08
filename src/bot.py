@@ -520,9 +520,9 @@ async def __restartGlobalScoreboard(guildId,channelId) :
 
                 for rank,(usernameID,usernameDN,points) in enumerate(scoreboard) : 
                     if rank < len(ranks) :
-                        message += f"{ranks[rank]} - **{re.escape(usernameDN).replace(r"\ ", " ")}**\n"
+                        message += f"{ranks[rank]} - **{re.escape(usernameDN).replace("\\ ", " ")}**\n"
                     else :
-                        message += f"**{rank + 1}** - **{re.escape(usernameDN).replace(r"\ ", " ")}**\n"
+                        message += f"**{rank + 1}** - **{re.escape(usernameDN).replace("\\ ", " ")}**\n"
                     message += f"{points} points\n"
 
                 await channel.purge(limit=None)
@@ -596,9 +596,9 @@ async def enableGlobalScoreboard(context, channelName):
 
                 for rank,(usernameID,usernameDN,points) in enumerate(scoreboard) : 
                     if rank < len(ranks) :
-                        message += f"{ranks[rank]} - **{re.escape(usernameDN).replace(r"\ ", " ")}**\n"
+                        message += f"{ranks[rank]} - **{re.escape(usernameDN).replace("\\ ", " ")}**\n"
                     else :
-                        message += f"**{rank + 1}** - **{re.escape(usernameDN).replace(r"\ ", " ")}**\n"
+                        message += f"**{rank + 1}** - **{re.escape(usernameDN).replace("\\ ", " ")}**\n"
                     message += f"{points} points\n"
 
                 await channel.purge(limit=None)
