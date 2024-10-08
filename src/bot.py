@@ -1,19 +1,21 @@
 #!/usr/bin/python3
 
 import discord
-from discord.ext import commands
-from discord.utils import get
 import asyncio
 import os
 import re
+import string
 
+from discord.ext import commands
+from discord.utils import get
+from random import randint
 from dotenv import load_dotenv
 from datetime import datetime,timedelta
 
+# local libs
 from local_libs.RootMe.PDO import PDO
 from local_libs.RootMe.DiffChecker import DiffChecker
 from local_libs.RootMe.API import API
-from random import randint
 
 load_dotenv()
 
@@ -258,7 +260,7 @@ async def getUsers(context):
             message += "Format : usernameID:usernameDN\n"
 
             for user in users : 
-                message += f"- {user[0]} : {user[1]}\n"
+                message += f"- {escape(user[0])} : {escape(user[1])}\n"
     except Exception :
         message = ">>> Une erreur est survenue"
 
@@ -520,9 +522,9 @@ async def __restartGlobalScoreboard(guildId,channelId) :
 
                 for rank,(usernameID,usernameDN,points) in enumerate(scoreboard) : 
                     if rank < len(ranks) :
-                        message += f"{ranks[rank]} - **{re.escape(usernameDN).replace("\\ ", " ")}**\n"
+                        message += f"{ranks[rank]} - **{escape(usernameDN)}**\n"
                     else :
-                        message += f"**{rank + 1}** - **{re.escape(usernameDN).replace("\\ ", " ")}**\n"
+                        message += f"**{rank + 1}** - **{escape(usernameDN)}**\n"
                     message += f"{points} points\n"
 
                 await channel.purge(limit=None)
@@ -596,9 +598,9 @@ async def enableGlobalScoreboard(context, channelName):
 
                 for rank,(usernameID,usernameDN,points) in enumerate(scoreboard) : 
                     if rank < len(ranks) :
-                        message += f"{ranks[rank]} - **{re.escape(usernameDN).replace("\\ ", " ")}**\n"
+                        message += f"{ranks[rank]} - **{escape(usernameDN)}**\n"
                     else :
-                        message += f"**{rank + 1}** - **{re.escape(usernameDN).replace("\\ ", " ")}**\n"
+                        message += f"**{rank + 1}** - **{escape(usernameDN)}**\n"
                     message += f"{points} points\n"
 
                 await channel.purge(limit=None)
@@ -628,7 +630,18 @@ async def disableGlobalScoreboard(context):
         pdo.setGlobalScoreboardChannelName(None)
         await context.send(">>> Scoreboard automatique désactivé")
 
-
+def escape(s) :
+    valid_chars = string.ascii_letters + " " + string.digits
+    
+    escaped_s = ""
+    for char in s :
+        if char not in  valid_chars :
+            escaped_s += re.escape(char)
+        else :
+            escaped_s += char
+    return escaped_s
+            
+    
 if __name__ == '__main__' :
 
     # Used to open and use only one database socket at the time for each discord server 
