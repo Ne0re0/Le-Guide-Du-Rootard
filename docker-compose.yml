@@ -2,12 +2,13 @@ version: '3.8'
 
 services:
   leguidedurootard:
-    container_name: leguidedurootard01
+    container_name: leguidedurootard
     build: .
     networks:
       - bridge
     volumes:
       - ./src/db/:/app/db/
+    restart: always
 
 networks:
   bridge:

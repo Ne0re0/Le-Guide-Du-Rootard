@@ -5,6 +5,8 @@ from discord.ext import commands
 from discord.utils import get
 import asyncio
 import os
+import re
+
 from dotenv import load_dotenv
 from datetime import datetime,timedelta
 
@@ -518,9 +520,9 @@ async def __restartGlobalScoreboard(guildId,channelId) :
 
                 for rank,(usernameID,usernameDN,points) in enumerate(scoreboard) : 
                     if rank < len(ranks) :
-                        message += f"{ranks[rank]} - **{usernameDN}**\n"
+                        message += f"{ranks[rank]} - **{re.escape(usernameDN)}**\n"
                     else :
-                        message += f"**{rank + 1}** - **{usernameDN}**\n"
+                        message += f"**{rank + 1}** - **{re.escape(usernameDN)}**\n"
                     message += f"{points} points\n"
 
                 await channel.purge(limit=None)
@@ -594,9 +596,9 @@ async def enableGlobalScoreboard(context, channelName):
 
                 for rank,(usernameID,usernameDN,points) in enumerate(scoreboard) : 
                     if rank < len(ranks) :
-                        message += f"{ranks[rank]} - **{usernameDN}**\n"
+                        message += f"{ranks[rank]} - **{re.escape(usernameDN)}**\n"
                     else :
-                        message += f"**{rank + 1}** - **{usernameDN}**\n"
+                        message += f"**{rank + 1}** - **{re.escape(usernameDN)}**\n"
                     message += f"{points} points\n"
 
                 await channel.purge(limit=None)
